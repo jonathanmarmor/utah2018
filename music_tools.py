@@ -125,9 +125,8 @@ class Note(object):
 
 class Instrument(list):
     def __init__(self, part_name):
-        # self.name = inst_name
-
         self.part_name = part_name
+        self.part_id = part_name
         self.instrument_name = part_name
         self.instrument_number = 1
 
@@ -135,10 +134,14 @@ class Instrument(list):
             name_chunks = part_name.split(' ')
             self.instrument_name = ' '.join(name_chunks[:-1])
             self.instrument_number = int(name_chunks[-1])  # if more than one of the same instrument
+            self.part_id = part_name.replace(' ', '_')
 
         self.abbreviation = instrument_data[self.instrument_name]['abbreviation']
+        self.abbreviation_id = self.abbreviation
         if self.instrument_number > 1:
+            self.abbreviation_id = '{}{}'.format(self.abbreviation, self.instrument_number)
             self.abbreviation = '{} {}'.format(self.abbreviation, self.instrument_number)
+
         self.range = instrument_data[self.instrument_name]['range']
         self._make_registers()
 
@@ -216,17 +219,19 @@ class Music(object):
         # Instantiate instruments/parts and make them accessible via Music
         self.instruments = []
         self.grid = {}
+        self.part_ids = []
         for part_name in self.part_names:
             instrument = Instrument(part_name)
-            setattr(self, instrument.part_name, instrument)
-            setattr(self, instrument.abbreviation, instrument)
+            self.part_ids.append(instrument.part_id)
+            setattr(self, instrument.part_id, instrument)
+            setattr(self, instrument.abbreviation_id, instrument)
             self.instruments.append(instrument)
-            self.grid[instrument.part_name] = instrument
+            self.grid[instrument.part_id] = instrument
 
     def print_registers(self):
         lowest = min([i.range[0] for i in self.instruments])
         highest = max([i.range[-1] for i in self.instruments])
-        longest_name = max([len(i.part_name) for i in self.instruments])
+        longest_name = max([len(i.part_id) for i in self.instruments])
         format_string = '{:<' + str(longest_name) + '}'
 
         header = ' ' * longest_name
@@ -238,7 +243,7 @@ class Music(object):
         print header
 
         for i in self.instruments:
-            line = format_string.format(i.part_name)
+            line = format_string.format(i.part_id)
             for pc in range(lowest, highest + 1):
                 if pc in i.range:
                     line += '. '
@@ -260,7 +265,7 @@ class Music(object):
             instruments = self.instruments
         result = {'tick': tick}
         for instrument in instruments:
-            result[instrument.part_name] = instrument.get_at_tick(tick)
+            result[instrument.part_id] = instrument.get_at_tick(tick)
         return result
 
     def __iter__(self):
@@ -270,19 +275,18 @@ class Music(object):
     def print_columns(self):
         print
         print self.title, 'by', self.composer
-        part_names = [i.part_name for i in self.instruments]
         header = '{:<16}'.format('tick')
-        for name in part_names:
-            header += '{:<16}'.format(name)
+        for part_id in self.part_ids:
+            header += '{:<16}'.format(part_id)
         print header
 
         for notes in self:
             row = '{:<16}'.format(notes['tick'])
-            for name in part_names:
-                if notes[name] == None:
+            for part_id in self.part_ids:
+                if notes[part_id] == None:
                     pitch = 'None'
                 else:
-                    pitch = notes[name].pitch
+                    pitch = notes[part_id].pitch
                 row += '{:<16}'.format(pitch)
             print row
 
@@ -294,7 +298,7 @@ class Music(object):
 
         result = {}
         for i in instruments:
-            result[i.part_name] = i.beats_since_last_rest() * beat_duration_seconds
+            result[i.part_id] = i.beats_since_last_rest() * beat_duration_seconds
 
         return result
 

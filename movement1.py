@@ -116,12 +116,9 @@ class Movement1(object):
             ),
             starting_tempo_bpm=160
         )
-        self.clusters = m.instruments[:]
-        print
-        print '==' * 40
-        print self.clusters
-        print '==' * 40
-        print
+
+        self.clusters = [m.ob, m.ob2, m.ob3]
+
         # self.clusters = [m.f, m.ob, m.cl]
         # self.thirds = [m.alto_saxophone, m.trumpet]
         # self.violin = m.violin
@@ -158,16 +155,15 @@ class Movement1(object):
 
     def print_columns(self):
         print
-        part_names = [i.part_name for i in self.music.instruments]
         header = '{:<16}'.format('tick')
-        for name in part_names:
-            header += '{:<16}'.format(name)
+        for part_id in self.music.part_ids:
+            header += '{:<16}'.format(part_id)
         print header
 
         for notes in self.music:
             row = '{:<16}'.format(notes['tick'])
-            for name in part_names:
-                row += '{:<16}'.format(notes[name].pitch)
+            for part_id in self.music.part_ids:
+                row += '{:<16}'.format(notes[part_id].pitch)
             print row
 
     def first(self):
