@@ -42,21 +42,26 @@ instrument_data = {
     'english_horn': {
         'range': range(54, 82),  # This is not the real range.
         'name': 'English Horn',
-        'abbreviation': 'e.horn',  # This is the right abbreviation.
+        'abbreviation': 'e.horn',  # This is not the right abbreviation.
     },
     'alto_recorder': {
         'range': range(54, 82),  # This is not the real range.
         'name': 'Alto Recorder',
-        'abbreviation': 'a.rec',  # This is the right abbreviation.
+        'abbreviation': 'a.rec',  # This is not the right abbreviation.
     },
     'soprano_recorder': {
         'range': range(65, 95),  # This is not the real range.
         'name': 'Soprano Recorder',
-        'abbreviation': 's.rec',  # This is the right abbreviation.
+        'abbreviation': 's.rec',  # This is not the right abbreviation.
     },
     'baritone_saxophone': {
         'range': range(37, 69),  # This is not the real range.
         'name': 'Baritone Saxophone',
-        'abbreviation': 'bari',  # This is the right abbreviation.
+        'abbreviation': 'bari',  # This is not the right abbreviation.
     },
+    'guitar': {
+        'range': range(40, 84),
+        'name': 'Guitar',
+        'abbreviation': 'gtr',
+    }
 }

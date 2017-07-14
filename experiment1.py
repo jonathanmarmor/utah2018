@@ -112,6 +112,9 @@ class Experiment1(object):
                 'alto_recorder',
                 'alto_recorder 2',
                 'baritone_saxophone',
+                'guitar',
+                'guitar 2',
+                'guitar 3',
 
                 # 'violin',
                 # 'flute',

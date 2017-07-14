@@ -38,6 +38,7 @@ instrument_classes = {
     'alto_recorder': music21.instrument.Recorder,
     'soprano_recorder': music21.instrument.Recorder,
     'baritone_saxophone': music21.instrument.BaritoneSaxophone,
+    'guitar': music21.instrument.Guitar,
 }
 
 for name in instrument_data:
