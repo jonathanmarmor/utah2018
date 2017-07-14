@@ -63,5 +63,15 @@ instrument_data = {
         'range': range(40, 84),
         'name': 'Guitar',
         'abbreviation': 'gtr',
-    }
+    },
+    'organ': {
+        'range': range(24, 108),  # This is not the real range.
+        'name': 'Organ',
+        'abbreviation': 'org',
+    },
+    'piano': {
+        'range': range(24, 108),  # This is not the real range.
+        'name': 'Piano',
+        'abbreviation': 'pno',
+    },
 }
