@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from movement1 import Movement1
+from experiment1 import Experiment1
 
 
 if __name__ == '__main__':
@@ -13,6 +13,6 @@ if __name__ == '__main__':
         action="store_true")
     args = parser.parse_args()
 
-    m1 = Movement1()
+    m1 = Experiment1()
     if not args.dont_notate:
         m1.notate()

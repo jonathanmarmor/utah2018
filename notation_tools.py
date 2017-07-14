@@ -3,10 +3,12 @@ import os
 
 import music21
 
+from instrument_data import instrument_data
+
 
 def show(stream):
-    # stream.show('musicxml', '/Applications/MuseScore 2.app')
-    stream.show('musicxml', '/Applications/Sibelius 7.app')
+    stream.show('musicxml', '/Applications/MuseScore 2.app')
+    # stream.show('musicxml', '/Applications/Sibelius 7.app')
 
 
 def get_music21_user_settings_path():
@@ -23,28 +25,23 @@ def print_music21_user_settings():
         print '{:<25} {}'.format(key, value)
 
 
-instrument_directory = {
-    'violin': {'class': music21.instrument.Violin, 'name': 'Violin', 'abbreviation': 'vln'},
-    'flute': {'class': music21.instrument.Flute, 'name': 'Flute', 'abbreviation': 'f'},
-    'oboe': {'class': music21.instrument.Oboe, 'name': 'Oboe', 'abbreviation': 'ob'},
-    'clarinet': {'class': music21.instrument.Clarinet, 'name': 'Clarinet', 'abbreviation': 'cl'},
-    'alto_saxophone': {'class': music21.instrument.Saxophone, 'name': 'Alto Saxophone', 'abbreviation': 'sx'},
-    'trumpet': {'class': music21.instrument.Trumpet, 'name': 'Trumpet', 'abbreviation': 'tpt'},
-    'bass': {'class': music21.instrument.Bass, 'name': 'Bass', 'abbreviation': 'b', 'clef': music21.clef.BassClef},
-    'percussion': {'class': music21.instrument.Percussion, 'name': 'Percussion', 'abbreviation': 'perc'}
+instrument_classes = {
+    'violin': music21.instrument.Violin,
+    'flute': music21.instrument.Flute,
+    'oboe': music21.instrument.Oboe,
+    'clarinet': music21.instrument.Clarinet,
+    'alto_saxophone': music21.instrument.Saxophone,
+    'trumpet': music21.instrument.Trumpet,
+    'bass': music21.instrument.Bass,
+    'percussion': music21.instrument.Percussion,
+    'english_horn': music21.instrument.EnglishHorn,
+    'alto_recorder': music21.instrument.Recorder,
+    'soprano_recorder': music21.instrument.Recorder,
+    'baritone_saxophone': music21.instrument.BaritoneSaxophone,
 }
 
-
-instrument_ranges = {
-    'violin': range(55, 96),
-    'flute': range(60, 97),
-    'oboe': range(59, 87),
-    'clarinet': range(50, 90),
-    'alto_saxophone': range(49, 81),
-    'trumpet': range(52, 83),
-    'bass': range(28, 61),
-    'percussion': None
-}
+for name in instrument_data:
+    instrument_data[name]['class'] = instrument_classes[name]
 
 
 def parse_part_name(part_name):
@@ -88,7 +85,7 @@ def make_music21_score(
 
         instrument_name, instrument_number = parse_part_name(part_name)
 
-        instrument = instrument_directory[instrument_name]
+        instrument = instrument_data[instrument_name]
 
         part = music21.stream.Part()
 
@@ -153,7 +150,7 @@ class Instrument(object):
 
         self._music21_part = music21_part
 
-        self.range = instrument_ranges[self.instrument_name]
+        self.range = instrument_data[self.instrument_name]['range']
 
     def add_note(self, pitch=None, duration=None):
         m21_note = make_music21_note(pitch, duration)
