@@ -6,9 +6,21 @@ import music21
 from instrument_data import instrument_data
 
 
+def which_notation_app():
+    sibelius = '/Applications/Sibelius 7.app'
+    muse_score = '/Applications/MuseScore 2.app'
+    if os.path.exists(sibelius):
+        # Prefer Sibelius
+        return sibelius
+    elif os.path.exists(muse_score):
+        return muse_score
+    else:
+        raise Exception('Neither Sibelius nor MuseScore is installed')
+
+
 def show(stream):
-    stream.show('musicxml', '/Applications/MuseScore 2.app')
-    # stream.show('musicxml', '/Applications/Sibelius 7.app')
+    notation_app = which_notation_app()
+    stream.show('musicxml', notation_app)
 
 
 def get_music21_user_settings_path():

@@ -117,8 +117,8 @@ class Experiment1(object):
                 'guitar 3',
                 'piano',
                 'piano 2',
-                # 'organ',
-                # 'organ 2',
+                'organ',
+                'organ 2',
 
                 # 'violin',
                 # 'flute',
