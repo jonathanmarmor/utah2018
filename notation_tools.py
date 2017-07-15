@@ -95,7 +95,6 @@ def make_music21_score(
     score = music21.stream.Score()
     score.insert(0, metadata)
 
-    parts = []  # Unnecessary?
     for part_name in part_names:
 
         instrument_name, instrument_number = parse_part_name(part_name)
@@ -129,7 +128,6 @@ def make_music21_score(
         if clef:
             part.append(clef())
 
-        parts.append(part)  # Unnecessary?
         score.insert(0, part)
 
     return score
