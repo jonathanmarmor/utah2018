@@ -105,20 +105,21 @@ class Experiment1(object):
                 'oboe',
                 'oboe 2',
                 'oboe 3',
-                'english_horn',
-                'english_horn 2',
-                'soprano_recorder',
-                'soprano_recorder 2',
+                # 'english_horn',
+                # 'english_horn 2',
+                # 'soprano_recorder',
+                # 'soprano_recorder 2',
                 'alto_recorder',
                 'alto_recorder 2',
-                'baritone_saxophone',
-                'guitar',
-                'guitar 2',
-                'guitar 3',
-                'piano',
-                'piano 2',
-                'organ',
-                'organ 2',
+                'alto_recorder 3',
+                # 'baritone_saxophone',
+                # 'guitar',
+                # 'guitar 2',
+                # 'guitar 3',
+                # 'piano',
+                # 'piano 2',
+                # 'organ',
+                # 'organ 2',
 
                 # 'violin',
                 # 'flute',
@@ -130,24 +131,51 @@ class Experiment1(object):
             ),
             starting_tempo_bpm=160
         )
+        beat_duration = 60.0 / self.music.starting_tempo_bpm
+
+
 
         self.clusters = [m.ob, m.ob2, m.ob3]
-
-        # self.clusters = [m.f, m.ob, m.cl]
-        # self.thirds = [m.alto_saxophone, m.trumpet]
-        # self.violin = m.violin
-        # self.bass = m.bass
-
-        # self.thirds_register = range(55, 81)
-
         cluster_lowest_pitch = 70
         for i in self.clusters:
             i.cluster_range = [p for p in i.range if p >= cluster_lowest_pitch]
+        self.clusters[0].add_note(pitch=84, duration=2)
+        self.clusters[1].add_note(pitch=83, duration=2)
+        self.clusters[2].add_note(pitch=82, duration=2)
+        while beat_duration * self.clusters[0].duration() < 120.0:
+            self.next()
 
-        self.first()
-        self.go(120.0)
-        self.stats['duration'] = self.music.duration_seconds()
-        self.print_stats()
+        self.clusters = [m.a_rec, m.a_rec2, m.a_rec3]
+        cluster_lowest_pitch = 70
+        for i in self.clusters:
+            i.cluster_range = [p for p in i.range if p >= cluster_lowest_pitch]
+        self.clusters[0].add_note(pitch=84, duration=2)
+        self.clusters[1].add_note(pitch=83, duration=2)
+        self.clusters[2].add_note(pitch=82, duration=2)
+        while beat_duration * self.clusters[0].duration() < 120.0:
+            self.next()
+
+
+
+
+
+        # self.clusters = [m.a_rec, m.a_rec2, m.a_rec3]
+
+        # # self.clusters = [m.f, m.ob, m.cl]
+        # # self.thirds = [m.alto_saxophone, m.trumpet]
+        # # self.violin = m.violin
+        # # self.bass = m.bass
+
+        # # self.thirds_register = range(55, 81)
+
+        # cluster_lowest_pitch = 70
+        # for i in self.clusters:
+        #     i.cluster_range = [p for p in i.range if p >= cluster_lowest_pitch]
+
+        # self.first()
+        # self.go(120.0)
+        # self.stats['duration'] = self.music.duration_seconds()
+        # # self.print_stats()
 
     def notate(self):
         self.music.notate()
@@ -183,9 +211,9 @@ class Experiment1(object):
     def first(self):
 
 
-        self.music.instruments[0].add_note(pitch=84, duration=2)
-        self.music.instruments[1].add_note(pitch=83, duration=2)
-        self.music.instruments[2].add_note(pitch=82, duration=2)
+        self.clusters[0].add_note(pitch=84, duration=2)
+        self.clusters[1].add_note(pitch=83, duration=2)
+        self.clusters[2].add_note(pitch=82, duration=2)
 
 
         # self.music.f.add_note(pitch=84, duration=2)
@@ -281,6 +309,10 @@ class Experiment1(object):
         changing = weighted_choice(self.clusters, weights)
 
         not_changing = [w for w in self.clusters if w is not changing]
+
+        print
+        print 'not_changing', not_changing
+        print
         return changing, not_changing
 
     def clusters_pick_new_pitch(self, changing, not_changing, allow_repeated_pitch=False):
@@ -341,64 +373,64 @@ class Experiment1(object):
 
         return new_pitch
 
-    def bass_next(self):
-        bar_number = self.bass.duration() // 4
-        bar_in_progression = bar_number % len(BLUES_PROGRESSION)
+    # def bass_next(self):
+    #     bar_number = self.bass.duration() // 4
+    #     bar_in_progression = bar_number % len(BLUES_PROGRESSION)
 
-        beat_number = int(self.bass.duration() % 4)
+    #     beat_number = int(self.bass.duration() % 4)
 
-        previous_pitch = self.bass.get_last_pitched().pitch
+    #     previous_pitch = self.bass.get_last_pitched().pitch
 
-        pitch_options = []
-        weights = []
+    #     pitch_options = []
+    #     weights = []
 
-        available_pitches = range(35, 52)
-        for pitch_option in available_pitches:
-            weight = 1.0
+    #     available_pitches = range(35, 52)
+    #     for pitch_option in available_pitches:
+    #         weight = 1.0
 
-            if pitch_option % 12 not in SCALE:
-                weight = .1
+    #         if pitch_option % 12 not in SCALE:
+    #             weight = .1
 
-            if pitch_option % 12 in BLUES_PROGRESSION[bar_in_progression]:
-                weight = 8.0
+    #         if pitch_option % 12 in BLUES_PROGRESSION[bar_in_progression]:
+    #             weight = 8.0
 
 
-            # The further away the new pitch from the previous pitch, the lower the weight
-            distance = abs(previous_pitch - pitch_option)
+    #         # The further away the new pitch from the previous pitch, the lower the weight
+    #         distance = abs(previous_pitch - pitch_option)
 
-            if distance == 0:
-                weight = 1.0
-            else:
-                if distance < 3:
-                    weight = weight * 8
-                elif distance < 6:
-                    weight = weight * 4
-                # elif distance < 9:
-                #     weight = weight * 2
-                elif distance > 12:
-                    weight = .125
+    #         if distance == 0:
+    #             weight = 1.0
+    #         else:
+    #             if distance < 3:
+    #                 weight = weight * 8
+    #             elif distance < 6:
+    #                 weight = weight * 4
+    #             # elif distance < 9:
+    #             #     weight = weight * 2
+    #             elif distance > 12:
+    #                 weight = .125
 
-            pitch_options.append(pitch_option)
-            weights.append(weight)
+    #         pitch_options.append(pitch_option)
+    #         weights.append(weight)
 
-        pitch = weighted_choice(pitch_options, weights)
+    #     pitch = weighted_choice(pitch_options, weights)
 
-        if beat_number == 0:
-            duration_options = [1,  2,  3, 4, 5, 6, 7, 8]
-            duration_weights = [35, 24, 2, 6, 1, 1, 1, 2]
-        elif beat_number == 1:
-            duration_options = [1,  2,  3,  4, 5, 6, 7]
-            duration_weights = [35, 12, 16, 1, 1, 1, 3]
-        elif beat_number == 2:
-            duration_options = [1,  2,  4, 6]
-            duration_weights = [24, 24, 1, 2]
-        elif beat_number == 3:
-            duration_options = [1,  2, 5]
-            duration_weights = [40, 2, 5]
+    #     if beat_number == 0:
+    #         duration_options = [1,  2,  3, 4, 5, 6, 7, 8]
+    #         duration_weights = [35, 24, 2, 6, 1, 1, 1, 2]
+    #     elif beat_number == 1:
+    #         duration_options = [1,  2,  3,  4, 5, 6, 7]
+    #         duration_weights = [35, 12, 16, 1, 1, 1, 3]
+    #     elif beat_number == 2:
+    #         duration_options = [1,  2,  4, 6]
+    #         duration_weights = [24, 24, 1, 2]
+    #     elif beat_number == 3:
+    #         duration_options = [1,  2, 5]
+    #         duration_weights = [40, 2, 5]
 
-        duration = weighted_choice(duration_options, duration_weights)
+    #     duration = weighted_choice(duration_options, duration_weights)
 
-        self.bass.add_note(pitch=pitch, duration=duration)
+    #     self.bass.add_note(pitch=pitch, duration=duration)
 
 
 if __name__ == '__main__':
