@@ -10,7 +10,7 @@ instrument_data = {
         'abbreviation': 'f',
     },
     'oboe': {
-        'range': range(59, 87),
+        'range': range(58, 91),
         'name': 'Oboe',
         'abbreviation': 'ob',
     },
@@ -45,12 +45,12 @@ instrument_data = {
         'abbreviation': 'e_horn',  # This is not the right abbreviation.
     },
     'alto_recorder': {
-        'range': range(59, 87),  # This is not the real range.
+        'range': range(65, 90),
         'name': 'Alto Recorder',
         'abbreviation': 'a_rec',  # This is not the right abbreviation.
     },
     'soprano_recorder': {
-        'range': range(65, 95),  # This is not the real range.
+        'range': range(60, 90),  # This might not be the real range.
         'name': 'Soprano Recorder',
         'abbreviation': 's_rec',  # This is not the right abbreviation.
     },
