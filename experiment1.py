@@ -2,6 +2,7 @@
 
 import random
 from collections import Counter
+import argparse
 
 from music_tools import Music, pitches_to_chord_type
 from utils import weighted_choice
@@ -97,7 +98,7 @@ BLUES_PROGRESSION = [
 SCALE = (0, 2, 3, 4, 5, 7, 9, 11)
 
 
-class Experiment1(object):
+class Movement1(object):
     def __init__(self):
         self.stats = self.init_stats()
         m = self.music = Music(
@@ -433,15 +434,19 @@ class Experiment1(object):
     #     self.bass.add_note(pitch=pitch, duration=duration)
 
 
-if __name__ == '__main__':
-    import argparse
+def command_line_interface():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d',
         '--dont-notate',
         help='dont generate notation',
         action="store_true")
-    args = parser.parse_args()
-    m3 = Movement1()
+    return parser.parse_args()
+
+
+if __name__ == '__main__':
+    args = command_line_interface()
+
+    m1 = Movement1()
     if not args.dont_notate:
-        m3.notate()
+        m1.notate()
