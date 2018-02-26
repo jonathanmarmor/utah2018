@@ -26,6 +26,16 @@ chord_types = [
 pitch_classes = range(12)
 
 
+def print_chord(chord):
+    result = ''
+    for pc in range(12):
+        if pc in chord:
+            result += '|'
+        else:
+            result += ' '
+    result = result * 10
+    return result
+
 
 def make_all_transitions():
     """
@@ -105,8 +115,7 @@ class Movement1(object):
     def __init__(self):
         m = self.music = Music(
             part_names=(
-                'flute',
-                'oboe',
+                # 'oboe',
                 'guitar',
                 'bass',
             ),
@@ -117,10 +126,12 @@ class Movement1(object):
         chords = generate_chords()
 
         for i, chord in enumerate(chords):
-            self.gen(self.music.oboe, chord, n_notes_options=[1, 2, 4], radius=4)
+            print print_chord(chord)
+
+            # self.gen(self.music.oboe, chord, n_notes_options=[1, 2, 4], radius=4)
             # self.gen(self.music.flute, chord, n_notes_options=[1, 2, 4], radius=4)
-            self.gen(self.music.guitar, chord, n_notes_options=[4, 8], radius=5)
-            self.gen(self.music.bass, chord, n_notes_options=[2, 4], radius=5)
+            self.gen(self.music.guitar, chord, n_notes_options=[4, 8], radius=4)
+            self.gen(self.music.bass, chord, n_notes_options=[2, 4], radius=4)
 
     def gen(self, instrument, chord, n_notes_options=[1, 2, 4], radius=4):
         n_notes = random.choice(n_notes_options)

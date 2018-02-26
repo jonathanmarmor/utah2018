@@ -53,6 +53,7 @@ instrument_classes = {
     'guitar': music21.instrument.Guitar,
     'organ': music21.instrument.Organ,
     'piano': music21.instrument.Piano,
+    'vibraphone': music21.instrument.Vibraphone,
 }
 
 for name in instrument_data:

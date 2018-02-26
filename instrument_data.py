@@ -74,4 +74,10 @@ instrument_data = {
         'name': 'Piano',
         'abbreviation': 'pno',
     },
+    'vibraphone': {
+        'range': range(48, 84),  # This is not the real range.
+        'name': 'Vibraphone',
+        'abbreviation': 'vibe',
+    },
+
 }
