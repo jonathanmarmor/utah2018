@@ -43,7 +43,7 @@ chord_types = [
     (0, 4, 7, 11),
     (0, 5, 7),
 
-    (0, 2, 4, 7, 9),
+    # (0, 2, 4, 7, 9),
 
 ]
 pitch_classes = range(12)
@@ -123,6 +123,37 @@ def generate_chords(n=100):
     return chords
 
 
+def find_loops(seq):
+    seen = []
+    dupes = collections.defaultdict(list)
+    for i, item in enumerate(seq):
+        dupes[item].append(i)
+
+    loops = collections.defaultdict(list)
+    for item in dupes:
+        indexes = dupes[item]
+        if len(indexes) > 1:
+            for a, b in pairwise(indexes):
+                loops[seq[a]].append(seq[a:b])
+
+    return loops
+
+
+def get_harmony_loops(min_length=4, max_length=6):
+    chords = generate_chords(1500)
+    chords = [tuple(c) for c in chords]
+
+    loops = find_loops(chords)
+
+    good_loops = []
+    for starting_chord in loops:
+        for loop in loops[starting_chord]:
+            if min_length <= len(loop) <= max_length:
+                good_loops.append(loop)
+
+    return good_loops
+
+
 class Movement1(object):
     def __init__(self):
         m = self.music = Music(
@@ -134,23 +165,21 @@ class Movement1(object):
             ),
             starting_tempo_bpm=105,
             output_dir_parent='output',
-            output_dir_name='experiment6',
+            output_dir_name='experiment7-looping',
         )
 
-        chords = generate_chords()
+        harmony_loops = get_harmony_loops()
 
-        # chord_counter = Counter()
-        # for chord in chords:
-        #     chord_counter[tuple(chord)] += 1
-
-        # print chord_counter.most_common()
+        loop = random.choice(harmony_loops)
+        print loop
+        chords = loop * 16
 
         for i, chord in enumerate(chords):
-            print i
-            chord_duration = random.choice([1, 2, 2, 2, 4])
+            # print i
+            chord_duration = 2  # random.choice([1, 2, 2, 2, 4])
 
             for instrument in self.music.instruments:
-                print instrument.instrument_name
+                # print instrument.instrument_name
                 remaining_duration = chord_duration
                 while remaining_duration:
                     duration_options = np.linspace(.25, remaining_duration, remaining_duration * 4)
@@ -166,10 +195,13 @@ class Movement1(object):
                     highest = min([previous_pitch + 5, instrument.safe_register[-1]])
 
                     pitch_options = [p for p in instrument.range if p % 12 in chord and lowest <= p <= highest and p is not previous_pitch]
-                    print pitch_options
+                    # print pitch_options
                     pitch = random.choice(pitch_options)
 
                     instrument.add_note(pitch=pitch, duration=duration)
+
+# TODO: alternate between this texture and another texture
+# TODO: find loop points in the harmonies and loop them
 
 
     def notate(self):
