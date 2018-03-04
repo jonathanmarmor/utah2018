@@ -193,7 +193,17 @@ class Instrument(list):
 
 
 class Music(object):
-    def __init__(self, title='Title', starting_tempo_bpm=60, part_names=None):
+    def __init__(self,
+            title='Title',
+            starting_tempo_bpm=60,
+            part_names=None,
+            output_dir_parent='output',
+            output_dir_name='tmp',
+        ):
+
+        self.output_dir_parent = output_dir_parent
+        self.output_dir_name = output_dir_name
+
         if part_names == None:
             part_names = (
                 'violin',
@@ -309,7 +319,9 @@ class Music(object):
             composer=self.composer,
             time_signature=self.time_signature,
             starting_tempo_bpm=self.starting_tempo_bpm,
-            starting_tempo_quarter_duration=self.starting_tempo_quarter_duration
+            starting_tempo_quarter_duration=self.starting_tempo_quarter_duration,
+            output_dir_parent=self.output_dir_parent,
+            output_dir_name=self.output_dir_name,
         )
 
         for instrument in self.instruments:

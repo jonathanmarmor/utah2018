@@ -85,9 +85,11 @@ def make_music21_score(
             composer='Jonathan Marmor',
             time_signature=None,
             starting_tempo_bpm=60,
-            starting_tempo_quarter_duration=1.0
+            starting_tempo_quarter_duration=1.0,
+            timestamp=None,
         ):
-    timestamp = datetime.datetime.utcnow()
+    if not timestamp:
+        timestamp = datetime.datetime.utcnow()
     metadata = music21.metadata.Metadata()
     metadata.title = title
     metadata.composer = composer
@@ -180,17 +182,16 @@ class Notation(object):
             composer='Jonathan Marmor',
             time_signature=None,
             starting_tempo_bpm=60,
-            starting_tempo_quarter_duration=1.0
+            starting_tempo_quarter_duration=1.0,
+            output_dir_parent='output',
+            output_dir_name='tmp',
         ):
 
-        # Set up temp file directory
-        music21.environment.set('directoryScratch', 'output/tmp')
+        self.timestamp = timestamp = datetime.datetime.utcnow()
 
-        # if temporary directory doesn't exist, create it
-        if not os.path.isdir('output/tmp'):
-            if not os.path.isdir('tmp'):
-                os.mkdir('output')
-            os.mkdir('output/tmp')
+        self.output_dir_parent = output_dir_parent
+        self.output_dir_name = output_dir_name
+        self.create_output_dir()
 
         self.part_names = part_names
 
@@ -202,6 +203,7 @@ class Notation(object):
             time_signature=time_signature,
             starting_tempo_bpm=starting_tempo_bpm,
             starting_tempo_quarter_duration=starting_tempo_quarter_duration,
+            timestamp=self.timestamp,
         )
 
         # Instantiate parts and instruments and make them accessible via Notation
@@ -212,6 +214,16 @@ class Notation(object):
             setattr(self, part_name, instrument)
             self.instruments.append(instrument)
             self.parts_by_name[part_name] = instrument
+
+    def create_output_dir(self):
+        self.output_dir = os.path.join(self.output_dir_parent, self.output_dir_name)
+
+        # if temporary directory doesn't exist, create it
+        if not os.path.exists(self.output_dir):
+            os.makedirs(self.output_dir)
+
+        # Set up temp file directory
+        music21.environment.set('directoryScratch', self.output_dir)
 
     def show(self):
         show(self._score)
