@@ -154,99 +154,81 @@ def get_harmony_loops(min_length=4, max_length=6):
     return good_loops
 
 
-class Movement1(object):
+def find_closest_scale_members(pitch, scale):
+    scale = [p for p in range(36, 96) if p % 12 in scale]
+
+    diffs = collections.defaultdict(list)
+    for scale_member in scale:
+        diff = np.abs(scale_member - pitch)
+        diffs[diff].append(scale_member)
+
+    return diffs[min(diffs)]
+
+
+def transpose(lick, n):
+    return [(p + n, d) for p, d in lick]
+
+
+def put_in_scale(lick, scale):
+    result = []
+    for p, d in lick:
+        if p % 12 not in scale:
+            closest_scale_members = find_closest_scale_members(p, scale)
+            p = random.choice(closest_scale_members)
+        result.append((p, d))
+    return result
+
+
+def put_in_register(lick, register):
+    pitches = [p for p, d in lick]
+    durations = [d for p, d in lick]
+    top_of_register = max(register)
+    bottom_of_register = min(register)
+
+    while not all([p in register for p in pitches]):
+        if max(pitches) > top_of_register:
+            pitches = [p - 12 for p in pitches]
+        elif min(pitches) < bottom_of_register:
+            pitches = [p + 12 for p in pitches]
+
+    return zip(pitches, durations)
+
+
+def get_random_scale():
+    root = random.randint(0, 11)
+    scale_type = random.choice([
+        [0, 2, 4, 5, 7, 9, 11],
+        # [0, 1, 4, 6, 7, 8, 11],
+        # [0, 2, 4, 7, 9],
+        # [0, 2, 4, 6, 8, 10],
+    ])
+    scale = [(p + root) % 12 for p in scale_type]
+    scale.sort()
+    return scale
+
+
+class Lick(list):
     def __init__(self):
-        m = self.music = Music(
-            part_names=(
-                'oboe',
-                'clarinet',
-                'vibraphone',
-                'bass'
-            ),
-            starting_tempo_bpm=105,
-            output_dir_parent='output',
-            output_dir_name='experiment8',
-        )
+        self.make()
 
-        chords_loop = random.choice(get_harmony_loops())
+    def make(self):
 
+        rhythm = []
+        for length in [1, 2, 1]:
+            rhythm.extend(self.make_rhythmic_figure(length))
+        rhythm.append(2)
 
+        register = range(60, 85)
 
-        rhythm = {}
-        for instrument in self.music.instruments:
-            rhythm[instrument.part_name] = self.make_rhythmic_figure(4)
+        pitch = random.choice(register)
+        for duration in rhythm:
 
-        print chords_loop
+            lowest = max([pitch - 3, register[0]])
+            highest = min([pitch + 3, register[-1]])
+            pitch_options = [p for p in register if lowest <= p <= highest and p is not pitch]
+            pitch = random.choice(pitch_options)
 
-        for instrument in self.music.instruments:
-            for chord in chords_loop * 8:
-                for duration in rhythm[instrument.part_name]:
-
-                    if len(instrument) == 0:
-                        previous_pitch = random.choice(instrument.middle_register)
-                    else:
-                        previous_pitch = instrument[-1].pitch
-                    lowest = max([previous_pitch - 5, instrument.safe_register[0]])
-                    highest = min([previous_pitch + 5, instrument.safe_register[-1]])
-                    pitch_options = [p for p in instrument.safe_register if p % 12 in chord and lowest <= p <= highest and p is not previous_pitch]
-                    pitch = random.choice(pitch_options)
-
-                    instrument.add_note(pitch=pitch, duration=duration)
-
-
-
-
-
-
-
-
-        # self.harmonic_rhythm = [4, 4, 2, 2, 4]
-        # for harmonic_duration in self.harmonic_rhythm:
-        #     figure = self.make_rhythmic_figure(harmonic_duration)
-
-    #     self.repeat_all()
-
-    #     self.make_pitches()
-
-    # def repeat_all(self, n=4):
-    #     '''Repeat everything in all parts'''
-    #     for instrument in self.music.instruments:
-    #         phrase = instrument[:]
-    #         for _ in range(n - 1):
-    #             for note in phrase:
-    #                 instrument.add_note(pitch=note.pitch, duration=note.duration)
-
-    # def make_pitches(self):
-    #     harmony_loops = get_harmony_loops()
-    #     loop = random.choice(harmony_loops)
-    #     print loop
-    #     chords = loop * 16
-
-    #     for i, chord in enumerate(chords):
-    #         # print i
-    #         chord_duration = 2  # random.choice([1, 2, 2, 2, 4])
-
-    #         for instrument in self.music.instruments:
-    #             # print instrument.instrument_name
-    #             remaining_duration = chord_duration
-    #             while remaining_duration:
-    #                 duration_options = np.linspace(.25, remaining_duration, remaining_duration * 4)
-    #                 duration = random.choice(duration_options)
-    #                 remaining_duration -= duration
-
-    #                 if len(instrument) == 0:
-    #                     previous_pitch = random.choice(instrument.middle_register)
-    #                 else:
-    #                     previous_pitch = instrument[-1].pitch
-
-    #                 lowest = max([previous_pitch - 5, instrument.safe_register[0]])
-    #                 highest = min([previous_pitch + 5, instrument.safe_register[-1]])
-
-    #                 pitch_options = [p for p in instrument.range if p % 12 in chord and lowest <= p <= highest and p is not previous_pitch]
-    #                 # print pitch_options
-    #                 pitch = random.choice(pitch_options)
-
-    #                 instrument.add_note(pitch=pitch, duration=duration)
+            self.append((pitch, duration))
 
     def make_rhythmic_figure(self, duration_in_quarters=4):
         remaining_duration = duration_in_quarters
@@ -258,21 +240,77 @@ class Movement1(object):
             remaining_duration -= duration
         return rhythm
 
-    # def make_rhythm(self):
+    def pitches(self):
+        return [p for p, d in self]
 
 
-    #     # for i in range(2):
-    #     #     # print i
-    #     #     chord_duration = 1  # random.choice([1, 2, 2, 2, 4])
+class Movement1(object):
+    def __init__(self):
+        m = self.music = Music(
+            part_names=(
+                'oboe',
+                'clarinet',
+                'vibraphone',
+                'bass'
+            ),
+            starting_tempo_bpm=105,
+            output_dir_parent='output',
+            output_dir_name='experiment9',
+        )
 
-    #     #     for instrument in self.music.instruments:
-    #     #         remaining_duration = chord_duration
-    #     #         while remaining_duration:
-    #     #             duration_options = np.linspace(.25, remaining_duration, remaining_duration * 4)
-    #     #             duration = random.choice(duration_options)
-    #     #             remaining_duration -= duration
+        # chords_loop = random.choice(get_harmony_loops())
 
-    #     #             instrument.add_note(duration=duration)
+        self.lick = Lick()
+
+        scale = get_random_scale()
+
+        for _ in range(100):
+            instrument = random.choice(self.music.instruments)
+
+            lick = transpose(self.lick, random.randint(1, 11))
+            lick = put_in_scale(lick, scale)
+            lick = put_in_register(lick, instrument.safe_register)
+
+            rest_before = random.choice([0, 0, 1, 1, 1, 2, 2, 2, 3, 4])
+            rest_after = random.choice([0, 0, 1, 1, 1, 2, 2, 2, 3, 4])
+
+            if rest_before:
+                instrument.add_note(pitch='rest', duration=rest_before)
+
+            for p, d in lick:
+                instrument.add_note(pitch=p, duration=d)
+
+            if rest_after:
+                instrument.add_note(pitch='rest', duration=rest_after)
+
+
+
+    # def make_theme(self):
+    #     rhythm = self.make_rhythmic_figure(4)
+    #     theme = []
+
+    #     oboe = self.music.oboe
+    #     pitch = random.choice(oboe.middle_register)
+    #     for duration in rhythm:
+
+    #         lowest = max([pitch - 3, oboe.safe_register[0]])
+    #         highest = min([pitch + 3, oboe.safe_register[-1]])
+    #         pitch_options = [p for p in oboe.safe_register if lowest <= p <= highest and p is not pitch]
+    #         pitch = random.choice(pitch_options)
+
+    #         theme.append((pitch, duration))
+
+    #     return theme
+
+    # def make_rhythmic_figure(self, duration_in_quarters=4):
+    #     remaining_duration = duration_in_quarters
+    #     rhythm = []
+    #     while remaining_duration:
+    #         duration_options = np.linspace(.25, remaining_duration, remaining_duration * 4)
+    #         duration = random.choice(duration_options)
+    #         rhythm.append(duration)
+    #         remaining_duration -= duration
+    #     return rhythm
 
     def notate(self):
         self.music.notate()
