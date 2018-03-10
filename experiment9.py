@@ -260,15 +260,19 @@ class Movement1(object):
 
         # chords_loop = random.choice(get_harmony_loops())
 
+        self.scale = get_random_scale()
+
+        for _ in range(5):
+            self.make_it(20)
+
+    def make_it(self, n=100):
         self.lick = Lick()
 
-        scale = get_random_scale()
-
-        for _ in range(100):
+        for _ in range(n):
             instrument = random.choice(self.music.instruments)
 
             lick = transpose(self.lick, random.randint(1, 11))
-            lick = put_in_scale(lick, scale)
+            lick = put_in_scale(lick, self.scale)
             lick = put_in_register(lick, instrument.safe_register)
 
             rest_before = random.choice([0, 0, 1, 1, 1, 2, 2, 2, 3, 4])
@@ -282,7 +286,6 @@ class Movement1(object):
 
             if rest_after:
                 instrument.add_note(pitch='rest', duration=rest_after)
-
 
 
     # def make_theme(self):

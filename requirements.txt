@@ -1,7 +1,5 @@
 music21==2.0.10
-
-# uncomment numpy, scipy, and matplotlib if you want music21 to stop
-# printing warnings every time it runs, or you want to use those libs
-# numpy
-# scipy
-# matplotlib
+numpy
+scipy
+matplotlib
+librosa
