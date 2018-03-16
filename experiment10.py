@@ -145,12 +145,8 @@ class Movement1(object):
 
         start_offset = duration_tools.quarters_and_sixteenths_to_ticks(quarters=start_quarter, sixteenths=start_sixteenth)
 
-
         duration = duration_tools.quarters_and_sixteenths_to_ticks(quarters=length_quarter, sixteenths=length_sixteenth)
 
-        print
-        print 'start_offset:', start_offset
-        print 'duration:', duration
         # Temporarily put the pitch 60 in there instead of the actual lick pitches
         instrument.put_note(start_offset, duration, pitch=60)
 

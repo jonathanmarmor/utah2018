@@ -155,7 +155,7 @@ class Instrument(object):
         print 'len(self.timeline._timeline):', len(self.timeline._timeline)
         print 'duration:', duration
 
-        note = Note(pitch=pitch, duration=Duration(flt=duration), ticks=ticks)
+        note = Note(pitch=pitch, duration=Duration(ticks=duration), ticks=ticks)
 
     def closeout(self):
         '''Put rests anywhere there aren't notes'''
