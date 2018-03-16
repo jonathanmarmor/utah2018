@@ -107,18 +107,26 @@ class Lick(list):
 
 class Movement1(object):
     def __init__(self):
+
+        self.part_names = (
+            'oboe',
+            'clarinet',
+            'vibraphone',
+            'bass'
+        )
+        self.starting_tempo_bpm = starting_tempo_bpm = 105
+        self.output_dir_parent = 'output'
+        self.output_dir_name = 'experiment10'
+        self.n_quarters = 128
+        self.ticks_per_quarter = 24
+
         m = self.music = Music(
-            part_names=(
-                'oboe',
-                'clarinet',
-                'vibraphone',
-                'bass'
-            ),
-            starting_tempo_bpm=105,
-            output_dir_parent='output',
-            output_dir_name='experiment10',
-            n_quarters=128,
-            ticks_per_quarter=24,
+            part_names=self.part_names,
+            starting_tempo_bpm=self.starting_tempo_bpm,
+            output_dir_parent=self.output_dir_parent,
+            output_dir_name=self.output_dir_name,
+            n_quarters=self.n_quarters,
+            ticks_per_quarter=self.ticks_per_quarter,
         )
 
         self.scale = get_random_scale()
@@ -147,15 +155,15 @@ class Movement1(object):
 
         duration = duration_tools.quarters_and_sixteenths_to_ticks(quarters=length_quarter, sixteenths=length_sixteenth)
 
-        # Temporarily put the pitch 60 in there instead of the actual lick pitches
-        instrument.put_note(start_offset, duration, pitch=60)
 
+        lick = transpose(self.lick, random.randint(1, 11))
+        lick = put_in_scale(lick, self.scale)
+        lick = put_in_register(lick, instrument.safe_register)
 
-
-
-        # lick = transpose(self.lick, random.randint(1, 11))
-        # lick = put_in_scale(lick, self.scale)
-        # lick = put_in_register(lick, instrument.safe_register)
+        for pitch, dur in lick:
+            duration_in_ticks = int(dur * self.ticks_per_quarter)
+            instrument.put_note(start_offset, duration_in_ticks, pitch=pitch)
+            start_offset += duration_in_ticks
 
     def notate(self):
         self.music.notate()
