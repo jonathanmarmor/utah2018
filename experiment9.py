@@ -6,7 +6,7 @@ import argparse
 
 import numpy as np
 
-from music_tools2 import Music
+from music_tools import Music
 
 
 def find_closest_scale_members(pitch, scale):

@@ -7,6 +7,10 @@ import argparse
 import numpy as np
 
 from music_tools2 import Music
+from duration import Duration
+
+
+duration_tools = Duration(ticks=24)
 
 
 def find_closest_scale_members(pitch, scale):
@@ -62,57 +66,6 @@ def get_random_scale():
     return scale
 
 
-class Timeline(object):
-    def __init__(self,
-            n_quarters=64,
-            ticks_per_quarter=24,
-        ):
-        self.ticks_per_quarter = ticks_per_quarter
-        self.ticks_per_sixteenth = ticks_per_quarter / 4
-        self.n_quarters = n_quarters
-        self.n_sixteenths = n_quarters * 4
-        self.n_ticks = ticks_per_quarter * n_quarters
-
-        self._timeline = np.zeros([n_ticks], dtype=bool)
-
-    def __len__(self):
-        return self._timeline.shape[0]
-
-    def to_ticks(self, length_quarters, length_sixteenths):
-        return (length_quarters * self.ticks_per_quarter) + (length_sixteenths * self.ticks_per_sixteenth)
-
-    def ticks_to_quarters_and_sixteenths(self, ticks):
-        quarters, remainder = divmod(ticks, self.ticks_per_quarter)
-        sixteenths, remaining_ticks = divmod(remainder, self.ticks_per_sixteenth)
-        return quarters, sixteenths, remaining_ticks
-
-    def get(self, quarter, sixteenth=0, length_quarters=1, length_sixteenths=0):
-        start = self.to_ticks(quarter, sixteenth)
-        length = self.to_ticks(length_quarters, length_sixteenths)
-        end = start + length
-        return self._timeline[start:end]
-
-    def fill(self, quarter, sixteenth=0, length_quarters=1, length_sixteenths=0):
-        chunk = self.get(quarter, sixteenth=sixteenth, length_quarters=length_quarters, length_sixteenths=length_sixteenths)
-        chunk.fill(True)
-
-    def check_if_clear(self, quarter, sixteenth=0, length_quarters=1, length_sixteenths=0):
-        chunk = self.get(quarter, sixteenth=sixteenth, length_quarters=length_quarters, length_sixteenths=length_sixteenths)
-        return chunk.any() == False
-
-    def find_openings(self, length_quarters=1, length_sixteenths=0):
-        openings = []
-        n_starts = self.n_sixteenths - (length_quarters * 4) - length_sixteenths + 1
-        for sixteenth in range(n_starts):
-            quarter, sixteenth = divmod(sixteenth, 4)
-            clear = self.check_if_clear(quarter, sixteenth, length_quarters, length_sixteenths)
-            if clear:
-                openings.append((quarter, sixteenth, length_quarters, length_sixteenths))
-                # chunk = self.get(quarter, sixteenth, length_quarters, length_sixteenths)
-                # openings.append(chunk)
-        return openings
-
-
 class Lick(list):
     def __init__(self):
         self.make()
@@ -164,50 +117,49 @@ class Movement1(object):
             starting_tempo_bpm=105,
             output_dir_parent='output',
             output_dir_name='experiment10',
+            n_quarters=128,
+            ticks_per_quarter=24,
         )
-
-        n_quarters = 128
-        self.timeline = {}
-        for i in part_names:
-            self.timeline[i] = Timeline(n_quarters=n_quarters)
 
         self.scale = get_random_scale()
         self.lick = Lick()
+
+        for _ in range(30):
+            self.put_lick()
+
+        for i in self.music.instruments:
+            i.closeout()
+
+        print 'Done making the music. Starting notation.'
 
 
     def put_lick(self):
         instrument = random.choice(self.music.instruments)
 
-        timeline = self.timeline[instrument.part_name]
-
-        openings = timeline.find_openings(
+        openings = instrument.timeline.find_openings(
             length_quarters=self.lick.duration_quarters,
             length_sixteenths=self.lick.duration_sixteenths
         )
 
         start_quarter, start_sixteenth, length_quarter, length_sixteenth = random.choice(openings)
 
-        timeline.fill(start_quarter, start_sixteenth, length_quarter, length_sixteenth)
+        start_offset = duration_tools.quarters_and_sixteenths_to_ticks(quarters=start_quarter, sixteenths=start_sixteenth)
+
+
+        duration = duration_tools.quarters_and_sixteenths_to_ticks(quarters=length_quarter, sixteenths=length_sixteenth)
+
+        print
+        print 'start_offset:', start_offset
+        print 'duration:', duration
+        # Temporarily put the pitch 60 in there instead of the actual lick pitches
+        instrument.put_note(start_offset, duration, pitch=60)
 
 
 
 
-        lick = transpose(self.lick, random.randint(1, 11))
-        lick = put_in_scale(lick, self.scale)
-        lick = put_in_register(lick, instrument.safe_register)
-
-        # rest_before = random.choice([0, 0, 1, 1, 1, 2, 2, 2, 3, 4])
-        # rest_after = random.choice([0, 0, 1, 1, 1, 2, 2, 2, 3, 4])
-
-        # if rest_before:
-        #     instrument.add_note(pitch='rest', duration=rest_before)
-
-        # for p, d in lick:
-        #     instrument.add_note(pitch=p, duration=d)
-
-        # if rest_after:
-        #     instrument.add_note(pitch='rest', duration=rest_after)
-
+        # lick = transpose(self.lick, random.randint(1, 11))
+        # lick = put_in_scale(lick, self.scale)
+        # lick = put_in_register(lick, instrument.safe_register)
 
     def notate(self):
         self.music.notate()
