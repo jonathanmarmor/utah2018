@@ -161,14 +161,19 @@ class Instrument(object):
         '''Put rests anywhere there aren't notes'''
         rest_ticks = []
         for i, tick in enumerate(self.timeline._timeline):
-            if tick.note and tick.note_start:
-                self.notes.append(tick.note)
-            elif not tick.note and tick.offset % 6 == 0:
+            if tick.note:
+                if tick.note_start:
+                    if rest_ticks:
+                        # Add up the previous rest duration and append it to self.notes
+                        duration_in_ticks = len(rest_ticks)
+                        note = Note(duration=Duration(ticks=duration_in_ticks), ticks=rest_ticks)
+                        self.notes.append(note)
 
-                # TODO accumulate rest durations to group these sixteenths into big rests
-
-                note = Note(duration=Duration(ticks=6), ticks=self.timeline._timeline[i:i+6])
-                self.notes.append(note)
+                    self.notes.append(tick.note)
+                if tick.note_end:
+                    rest_ticks = []
+            else:
+                rest_ticks.append(tick)
 
 
 class Music(object):
