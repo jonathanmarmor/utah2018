@@ -19,6 +19,11 @@ instrument_data = {
         'name': 'Clarinet',
         'abbreviation': 'cl',
     },
+    'bass_clarinet': {
+        'range': range(38, 78),
+        'name': 'Bass Clarinet',
+        'abbreviation': 'bcl',
+    },
     'alto_saxophone': {
         'range': range(49, 81),
         'name': 'Alto Saxophone',

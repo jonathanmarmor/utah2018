@@ -42,6 +42,7 @@ instrument_classes = {
     'flute': music21.instrument.Flute,
     'oboe': music21.instrument.Oboe,
     'clarinet': music21.instrument.Clarinet,
+    'bass_clarinet': music21.instrument.BassClarinet,
     'alto_saxophone': music21.instrument.Saxophone,
     'trumpet': music21.instrument.Trumpet,
     'bass': music21.instrument.Bass,

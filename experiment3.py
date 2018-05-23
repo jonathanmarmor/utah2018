@@ -7,7 +7,10 @@ from instrument_data import instrument_data
 
 
 class Instrument(object):
-    def __init__(self):
+    def __init__(self, instrument_name):
+        data = instrument_data[instrument_name]
+
+
 
 
 class Breath(object):

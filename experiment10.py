@@ -104,13 +104,16 @@ class Lick(list):
     def pitches(self):
         return [p for p, d in self]
 
+    def intervals(self):
+        return [b[0] - a[0] for a, b in pairwise(self)]
+
 
 class Movement1(object):
     def __init__(self):
 
         self.part_names = (
             'oboe',
-            'clarinet',
+            'bass_clarinet',
             'vibraphone',
             'bass'
         )
