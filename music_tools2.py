@@ -151,9 +151,9 @@ class Instrument(object):
 
         ticks = self.timeline._timeline[start_tick:start_tick + duration_in_ticks]
 
-        print 'len(ticks)', len(ticks)
-        print 'len(self.timeline._timeline):', len(self.timeline._timeline)
-        print 'duration:', duration
+        # print 'len(ticks)', len(ticks)
+        # print 'len(self.timeline._timeline):', len(self.timeline._timeline)
+        # print 'duration:', duration
 
         note = Note(pitch=pitch, duration=Duration(ticks=duration), ticks=ticks)
 

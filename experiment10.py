@@ -72,7 +72,7 @@ class Lick(list):
 
     def make(self):
         rhythm = []
-        for length in [1, 2, 1]:
+        for length in [1, 1]:
             rhythm.extend(self.make_rhythmic_figure(length))
         rhythm.append(2)
 
@@ -108,6 +108,10 @@ class Lick(list):
         return [b[0] - a[0] for a, b in pairwise(self)]
 
 
+class NoMoreOpenings(Exception):
+    pass
+
+
 class Movement1(object):
     def __init__(self):
 
@@ -133,10 +137,25 @@ class Movement1(object):
         )
 
         self.scale = get_random_scale()
-        self.lick = Lick()
 
-        for _ in range(30):
-            self.put_lick()
+        self.licks = []
+        for _ in range(2):
+            self.licks.append(Lick())
+
+
+        # openings_remaining = {}
+        # for instrument in self.part_names:
+        #     openings_remaining[instrument] = True
+
+        openings_remaining = True
+        # while any(openings_remaining.values()):
+        while openings_remaining:
+            instrument = random.choice(self.music.instruments)
+            try:
+                self.put_lick(self.licks[0], instrument)
+            except NoMoreOpenings:
+                # openings_remaining[instrument] = False
+                openings_remaining = False
 
         for i in self.music.instruments:
             i.closeout()
@@ -144,22 +163,29 @@ class Movement1(object):
         print 'Done making the music. Starting notation.'
 
 
-    def put_lick(self):
-        instrument = random.choice(self.music.instruments)
+    def put_lick(self, lick, instrument):
+        # instrument = random.choice(self.music.instruments)
 
         openings = instrument.timeline.find_openings(
-            length_quarters=self.lick.duration_quarters,
-            length_sixteenths=self.lick.duration_sixteenths
+            length_quarters=lick.duration_quarters,
+            length_sixteenths=lick.duration_sixteenths
         )
+        if not openings:
+            raise NoMoreOpenings()
 
-        start_quarter, start_sixteenth, length_quarter, length_sixteenth = random.choice(openings)
+
+        # Find openings that start on the quarternote
+        openings = [o for o in openings if o[1] == 0]
+        if openings:
+            start_quarter, start_sixteenth, length_quarter, length_sixteenth = random.choice(openings)
+        else:
+            return
 
         start_offset = duration_tools.quarters_and_sixteenths_to_ticks(quarters=start_quarter, sixteenths=start_sixteenth)
 
         duration = duration_tools.quarters_and_sixteenths_to_ticks(quarters=length_quarter, sixteenths=length_sixteenth)
 
-
-        lick = transpose(self.lick, random.randint(1, 11))
+        lick = transpose(lick, random.randint(1, 11))
         lick = put_in_scale(lick, self.scale)
         lick = put_in_register(lick, instrument.safe_register)
 
