@@ -159,7 +159,7 @@ class Movement1(object):
         m = self.music = Music(
             part_names=(
                 'oboe',
-                'clarinet',
+                'bass_clarinet',
                 'vibraphone',
                 'bass'
             ),
