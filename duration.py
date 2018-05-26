@@ -57,14 +57,18 @@ class Duration(object):
             ticks_per_quarter = self.ticks_per_quarter
         return float(tick) / ticks_per_quarter
 
-    def ticks_to_quarters_and_sixteenths(self, ticks):
-        quarters, remainder = divmod(ticks, self.ticks_per_quarter)
-        sixteenths, remaining_ticks = divmod(remainder, self.ticks_per_quarter * 4)
+    def ticks_to_quarters_and_sixteenths(self, ticks, ticks_per_quarter=None):
+        if not ticks_per_quarter:
+            ticks_per_quarter = self.ticks_per_quarter
+        quarters, remainder = divmod(ticks, ticks_per_quarter)
+        sixteenths, remaining_ticks = divmod(remainder, ticks_per_quarter * 4)
         return quarters, sixteenths, remaining_ticks
 
-    def quarters_and_sixteenths_to_ticks(self, quarters, sixteenths):
-        ticks = quarters * self.ticks_per_quarter
-        ticks = ticks + (sixteenths * (self.ticks_per_quarter / 4))
+    def quarters_and_sixteenths_to_ticks(self, quarters, sixteenths, ticks_per_quarter=None):
+        if not ticks_per_quarter:
+            ticks_per_quarter = self.ticks_per_quarter
+        ticks = quarters * ticks_per_quarter
+        ticks = ticks + (sixteenths * (ticks_per_quarter / 4))
         return ticks
 
     def set_real_time(self, quarters_per_minute):

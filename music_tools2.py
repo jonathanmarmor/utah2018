@@ -98,8 +98,10 @@ class Timeline(object):
 
 class Instrument(object):
     def __init__(self, part_name, n_quarters=64, ticks_per_quarter=24):
+        self.ticks_per_quarter = ticks_per_quarter
+
         self.notes = []
-        self.timeline = Timeline(n_quarters=n_quarters, ticks_per_quarter=ticks_per_quarter)
+        self.timeline = Timeline(n_quarters=n_quarters, ticks_per_quarter=self.ticks_per_quarter)
 
         self._make_part_names(part_name)
 
@@ -155,7 +157,7 @@ class Instrument(object):
         # print 'len(self.timeline._timeline):', len(self.timeline._timeline)
         # print 'duration:', duration
 
-        note = Note(pitch=pitch, duration=Duration(ticks=duration), ticks=ticks)
+        note = Note(pitch=pitch, duration=Duration(ticks=duration, ticks_per_quarter=self.ticks_per_quarter), ticks=ticks)
 
     def closeout(self):
         '''Put rests anywhere there aren't notes'''
@@ -166,7 +168,7 @@ class Instrument(object):
                     if rest_ticks:
                         # Add up the previous rest duration and append it to self.notes
                         duration_in_ticks = len(rest_ticks)
-                        note = Note(duration=Duration(ticks=duration_in_ticks), ticks=rest_ticks)
+                        note = Note(duration=Duration(ticks=duration_in_ticks, ticks_per_quarter=self.ticks_per_quarter), ticks=rest_ticks)
                         self.notes.append(note)
 
                     self.notes.append(tick.note)

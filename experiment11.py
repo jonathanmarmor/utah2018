@@ -121,12 +121,12 @@ class Sequence(list):
 
             for p, d in lick:
                 self.append((p, d))
-            self.append((None, self.gap_duration))
+            if self.gap_duration:
+                self.append((None, self.gap_duration))
 
 
 class Movement1(object):
     def __init__(self):
-
         self.part_names = (
             'oboe',
             'bass_clarinet',
@@ -134,16 +134,14 @@ class Movement1(object):
             'bass'
         )
         self.starting_tempo_bpm = 105
-        self.output_dir_parent = 'output'
-        self.output_dir_name = 'experiment11'
         self.n_quarters = 128
-        self.ticks_per_quarter = 24
+        self.ticks_per_quarter = 32
+        self.duration_tools = Duration(ticks=self.ticks_per_quarter, ticks_per_quarter=self.ticks_per_quarter)
 
         m = self.music = Music(
             part_names=self.part_names,
             starting_tempo_bpm=self.starting_tempo_bpm,
-            output_dir_parent=self.output_dir_parent,
-            output_dir_name=self.output_dir_name,
+            output_dir_name='experiment11',
             n_quarters=self.n_quarters,
             ticks_per_quarter=self.ticks_per_quarter,
         )
@@ -151,13 +149,14 @@ class Movement1(object):
 
         instrument = self.music.instruments[0]
         lick = Lick()
-        sequence = Sequence(lick, instrument)
+        sequence = Sequence(lick, instrument, 12)
 
-        start_offset = duration_tools.quarters_and_sixteenths_to_ticks(quarters=0, sixteenths=0)
-        duration = duration_tools.quarters_and_sixteenths_to_ticks(quarters=0, sixteenths=int(lick.duration * 4))
+        start_offset = self.duration_tools.quarters_and_sixteenths_to_ticks(quarters=0, sixteenths=0, ticks_per_quarter=self.ticks_per_quarter)
+        # duration = self.duration_tools.quarters_and_sixteenths_to_ticks(quarters=0, sixteenths=int(lick.duration * 4), ticks_per_quarter=self.ticks_per_quarter)
 
         for pitch, dur in sequence:
             duration_in_ticks = int(dur * self.ticks_per_quarter)
+
             instrument.put_note(start_offset, duration_in_ticks, pitch=pitch)
             start_offset += duration_in_ticks
 
