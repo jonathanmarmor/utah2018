@@ -15,8 +15,9 @@ def float_to_tick(flt, ticks_per_quarter=24):
 
 
 class Tick(object):
-    def __init__(self, offset, timings):
+    def __init__(self, offset, timings, index):
         self.offset = offset
+        self.index = index
 
         self.quarters_offset, self.sixteenths_offset, self.remaining_ticks_offset = timings
 
@@ -55,7 +56,10 @@ class Timeline(object):
         self.n_sixteenths = n_quarters * 4
         self.n_ticks = ticks_per_quarter * n_quarters
 
-        self._timeline = [Tick(offset=tick, timings=self.ticks_to_quarters_and_sixteenths(tick)) for tick in range(self.n_ticks)]
+        self._timeline = []
+        for index, tick in enumerate(range(self.n_ticks)):
+            t = Tick(offset=tick, timings=self.ticks_to_quarters_and_sixteenths(tick), index=index)
+            self._timeline.append(t)
 
     def __len__(self):
         return len(self._timeline)
@@ -141,23 +145,17 @@ class Instrument(object):
         self.safe_register = utils.flatten(registers[1:-1])
         self.very_safe_register = utils.flatten(registers[2:-2])
 
-    def add_note(self, pitch=None, duration=0.0):
-        self.notes.append(Note(pitch=pitch, duration=duration))
+    # def add_note(self, pitch=None, duration=0.0):
+    #     self.notes.append(Note(pitch=pitch, duration=duration))
 
     def put_note(self, start_offset, duration, pitch=None):
-        # start_tick = float_to_tick(start_offset)
-        # duration_in_ticks = float_to_tick(duration)
+        start_tick = float_to_tick(start_offset, ticks_per_quarter=self.ticks_per_quarter)
+        duration_in_ticks = float_to_tick(duration, ticks_per_quarter=self.ticks_per_quarter)
+        end_tick = start_tick + duration_in_ticks
 
-        start_tick = start_offset
-        duration_in_ticks = duration
+        ticks = self.timeline._timeline[start_tick:end_tick]
 
-        ticks = self.timeline._timeline[start_tick:start_tick + duration_in_ticks]
-
-        # print 'len(ticks)', len(ticks)
-        # print 'len(self.timeline._timeline):', len(self.timeline._timeline)
-        # print 'duration:', duration
-
-        note = Note(pitch=pitch, duration=Duration(ticks=duration, ticks_per_quarter=self.ticks_per_quarter), ticks=ticks)
+        note = Note(pitch=pitch, duration=Duration(ticks=duration_in_ticks, ticks_per_quarter=self.ticks_per_quarter), ticks=ticks)
 
     def closeout(self):
         '''Put rests anywhere there aren't notes'''
