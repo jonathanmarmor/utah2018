@@ -8,7 +8,7 @@ import numpy as np
 
 from music_tools2 import Music
 from duration import Duration
-from sections import Sections
+from sections import Layers
 
 
 def weighted_choice(indexes, weights):
@@ -70,7 +70,8 @@ def put_in_register(lick, register):
 
 
 class Lick(list):
-    def __init__(self):
+    def __init__(self, instrument=None):
+        self.instrument = instrument
         self.make()
 
     def make(self):
@@ -93,6 +94,8 @@ class Lick(list):
         rhythm.append(end_duration)
 
         register = range(60, 85)
+        if self.instrument:
+            register = self.instrument.safe_register
 
         pitch = random.choice(register)
         for duration in rhythm:
@@ -129,13 +132,16 @@ class Sequence(list):
 
         self.interval = random.choice([0, 1, -1, 2, -2])  # , 5, -5, 7, -7])
 
-        max_gap_duration = lick.duration  # * 2
+        max_gap_duration = lick.duration * 1.5
         gap_duration_options = np.linspace(0, max_gap_duration, (max_gap_duration * 4) + 1)
+        gap_duration_options = gap_duration_options[2:]
 
         # Only include gaps that would make the total duration an even number of sixteenth notes
         gap_duration_options = [g for g in gap_duration_options if (g + lick.duration) % .5 == 0.0]
 
         self.gap_duration, _ = descending_weighted_choice(gap_duration_options)
+
+        self.duration = (lick.duration + self.gap_duration)* repetitions
 
         for repetition in range(repetitions):
             transposition = self.interval * repetition
@@ -145,6 +151,7 @@ class Sequence(list):
 
             for p, d in lick:
                 self.append((p, d))
+
             if self.gap_duration:
                 self.append((None, self.gap_duration))
 
@@ -163,7 +170,7 @@ class Movement1(object):
         m = self.music = Music(
             part_names=self.part_names,
             starting_tempo_bpm=self.bpm,
-            output_dir_name='experiment11',
+            output_dir_name='experiment14',
             n_quarters=self.n_quarters,
             ticks_per_quarter=self.ticks_per_quarter,
         )
@@ -190,11 +197,13 @@ class Movement1(object):
         self.n_bars = int(target_duration_seconds / self.bar_duration_seconds)
         self.n_quarters = self.n_bars * 4
 
-        self.duration = self.bar_duration_seconds * self.n_bars
+        self.duration_seconds = self.bar_duration_seconds * self.n_bars
+        self.duration_quarters = float(self.n_quarters)
 
         self.ticks_per_quarter = 32
         self.n_ticks = self.n_quarters * self.ticks_per_quarter
 
+        self.layers = Layers(self.n_quarters, self.ticks_per_quarter, self.bpm)
 
     def put_fragment(self, fragment, instrument, offset):
         for pitch, duration in fragment:
@@ -202,43 +211,114 @@ class Movement1(object):
             offset += duration
 
     def make_music(self):
-        # self.setup_harmony_sections()
-
-
         oboe = self.music.oboe
         bass_clarinet = self.music.bass_clarinet
         vibes = self.music.vibraphone
         bass = self.music.bass
 
-        lick = Lick()
+        # Make harmonies plan
+        self.layers.add_layer('harmony', [3, 1, 3, 1, 2, 2, 2, 1, 1] * (self.n_bars / 4))
+        for harmony in self.layers['harmony']:
+            if harmony.index % 9 == 0:
+                harmony.harmony = [0, 4, 7]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
+            elif harmony.index % 9 == 1:
+                harmony.harmony = [5, 9, 0]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
 
-        vibes_sequence = Sequence(lick, vibes, 20)
+            elif harmony.index % 9 == 2:
+                harmony.harmony = [0, 4, 7]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
+            elif harmony.index % 9 == 3:
+                harmony.harmony = [5, 9, 0]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
 
-        # for note in vibes_sequence:
-        #     harmony_section = self.harmony_sections.get_by_sample_offset(start)
+            elif harmony.index % 9 == 4:
+                harmony.harmony = [2, 5, 9, 0]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
+            elif harmony.index % 9 == 5:
+                harmony.harmony = [2, 5, 7, 11]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 11]
+
+            elif harmony.index % 9 == 6:
+                harmony.harmony = [0, 4, 7, 10]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 10]
+            elif harmony.index % 9 == 7:
+                harmony.harmony = [5, 9, 0, 3]
+                harmony.scale = [0, 2, 3, 5, 7, 9, 10]
+            elif harmony.index % 9 == 8:
+                harmony.harmony = [0, 4, 7, 10]
+                harmony.scale = [0, 2, 4, 5, 7, 9, 10]
 
 
-        self.put_fragment(vibes_sequence, vibes, 0)
+        for instrument in self.music.instruments:
+            offset = 0
+            duration_remaining = self.duration_quarters
+            while duration_remaining > 40.0:
+                lick = Lick(instrument=instrument)
+                sequence = Sequence(lick, instrument, repetitions=random.randint(3, 10))
+                duration_remaining -= sequence.duration
 
-        oboe_sequence = Sequence(lick, oboe, 16)
-        self.put_fragment(oboe_sequence, oboe, 8)
+                previous_pitch = lick[0][0]
+                for pitch, duration in sequence:
+                    now = self.layers.get_in_window(offset, duration)
 
-        bass_sequence = Sequence(lick, bass, 12)
-        self.put_fragment(bass_sequence, bass, 16)
+                    if pitch is not None:
+                        pitch_options = range(pitch - 4, pitch + 5)
+                        if previous_pitch in pitch_options:
+                            pitch_options.remove(previous_pitch)
 
-        bass_clarinet_sequence = Sequence(lick, oboe, 8)
-        self.put_fragment(bass_clarinet_sequence, bass_clarinet, 20)
+                        harmonies = now['harmony']
+                        print harmonies
+                        if len(harmonies) > 1:
+                            harmony_options = list(set(harmonies[0].harmony).intersection(*[h.harmony for h in harmonies]))
+                            if not harmony_options or random.random() < .2:
+                                scales = [h.scale for h in harmonies]
+                                harmony_options = list(set(scales[0]).intersection(*scales))
+                        else:
+                            harmony_options = harmonies[0].harmony
+                            if not harmony_options or random.random() < .2:
+                                harmony_options = harmonies[0].scale
+
+                        # harmony_options = now['harmony'].scale
+                        # if now['sixteenths'].index % 2 == 0:
+                        #     harmony_options = now['harmony'].harmony
+
+                        pitch_options = [p for p in pitch_options if p % 12 in harmony_options]
+                        if not pitch_options:
+                            pitch_options = range(pitch - 8, pitch + 9)
+                            pitch_options = [p for p in pitch_options if p % 12 in harmony_options]
+                        print pitch_options
+
+                        pitch = random.choice(pitch_options)
+                        previous_pitch = pitch
+
+                    instrument.put_note(offset, duration, pitch)
+                    offset += duration
+
+
+
+
+
+
+        # vibes_sequence = Sequence(lick, vibes, 20)
+
+        # # for note in vibes_sequence:
+        # #     harmony_section = self.harmony_sections.get_by_sample_offset(start)
+
+
+        # self.put_fragment(vibes_sequence, vibes, 0)
+
+        # oboe_sequence = Sequence(lick, oboe, 16)
+        # self.put_fragment(oboe_sequence, oboe, 8)
+
+        # bass_sequence = Sequence(lick, bass, 12)
+        # self.put_fragment(bass_sequence, bass, 16)
+
+        # bass_clarinet_sequence = Sequence(lick, oboe, 8)
+        # self.put_fragment(bass_clarinet_sequence, bass_clarinet, 20)
 
     # def make_line(self):
-
-
-    # def setup_harmony_sections(self):
-    #     self.harmony_sections = Sections([3, 1] * self.n_bars, self.n_ticks)
-    #     for i, harmony in enumerate(self.harmony_sections):
-    #         if i % 2:
-    #             harmony.harmony = [0, 4, 7]
-    #         else:
-    #             harmony.harmony = [5, 9, 0]
 
 
     def notate(self):

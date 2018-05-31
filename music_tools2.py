@@ -87,8 +87,10 @@ class Timeline(object):
         chunk = self.get(quarter, sixteenth=sixteenth, length_quarters=length_quarters, length_sixteenths=length_sixteenths)
         return all([tick.pitch == None for tick in chunk])
 
-    def find_openings(self, length_quarters=1, length_sixteenths=0):
+    def find_openings(self, duration):
+        # duration is in decimal quarter durations
         openings = []
+
         n_starts = self.n_sixteenths - (length_quarters * 4) - length_sixteenths + 1
         for sixteenth in range(n_starts):
             quarter, sixteenth = divmod(sixteenth, 4)
@@ -98,6 +100,18 @@ class Timeline(object):
                 # chunk = self.get(quarter, sixteenth, length_quarters, length_sixteenths)
                 # openings.append(chunk)
         return openings
+
+    # def find_openings(self, length_quarters=1, length_sixteenths=0):
+    #     openings = []
+    #     n_starts = self.n_sixteenths - (length_quarters * 4) - length_sixteenths + 1
+    #     for sixteenth in range(n_starts):
+    #         quarter, sixteenth = divmod(sixteenth, 4)
+    #         clear = self.check_if_clear(quarter, sixteenth, length_quarters, length_sixteenths)
+    #         if clear:
+    #             openings.append((quarter, sixteenth, length_quarters, length_sixteenths))
+    #             # chunk = self.get(quarter, sixteenth, length_quarters, length_sixteenths)
+    #             # openings.append(chunk)
+    #     return openings
 
 
 class Instrument(object):
@@ -156,6 +170,19 @@ class Instrument(object):
         ticks = self.timeline._timeline[start_tick:end_tick]
 
         note = Note(pitch=pitch, duration=Duration(ticks=duration_in_ticks, ticks_per_quarter=self.ticks_per_quarter), ticks=ticks)
+
+    def find_openings(self, duration):
+        # duration is in quarter durations
+        length_sixteenths = int(duration * 4)
+        print 'length_sixteenths', length_sixteenths
+
+        openings = []
+        for quarter, sixteenth, length_quarters, length_sixteenths in self.timeline.find_openings(length_sixteenths=length_sixteenths):
+            openings.append({
+                'start': quarter + (sixteenth * .25),
+                'duration': length_quarters + (length_sixteenths * .25)
+            })
+        return openings
 
     def closeout(self):
         '''Put rests anywhere there aren't notes'''
