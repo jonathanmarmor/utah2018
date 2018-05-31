@@ -136,8 +136,8 @@ class Sequence(list):
         gap_duration_options = np.linspace(0, max_gap_duration, (max_gap_duration * 4) + 1)
         gap_duration_options = gap_duration_options[2:]
 
-        # Only include gaps that would make the total duration an even number of sixteenth notes
-        gap_duration_options = [g for g in gap_duration_options if (g + lick.duration) % .5 == 0.0]
+        # Only include gaps that would make the total duration an even number of quarter notes
+        gap_duration_options = [g for g in gap_duration_options if (g + lick.duration) % 2.0 == 0.0]
 
         self.gap_duration, _ = descending_weighted_choice(gap_duration_options)
 
@@ -217,44 +217,41 @@ class Movement1(object):
         bass = self.music.bass
 
         # Make harmonies plan
-        self.layers.add_layer('harmony', [3, 1, 3, 1, 2, 2, 2, 1, 1] * (self.n_bars / 4))
+        self.layers.add_layer('harmony', self.n_quarters)
         for harmony in self.layers['harmony']:
-            if harmony.index % 9 == 0:
+            if harmony.index % 8 == 0:
                 harmony.harmony = [0, 4, 7]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
-            elif harmony.index % 9 == 1:
+            elif harmony.index % 8 == 1:
                 harmony.harmony = [5, 9, 0]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
 
-            elif harmony.index % 9 == 2:
+            elif harmony.index % 8 == 2:
                 harmony.harmony = [0, 4, 7]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
-            elif harmony.index % 9 == 3:
+            elif harmony.index % 8 == 3:
                 harmony.harmony = [5, 9, 0]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
 
-            elif harmony.index % 9 == 4:
+            elif harmony.index % 8 == 4:
                 harmony.harmony = [2, 5, 9, 0]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
-            elif harmony.index % 9 == 5:
+            elif harmony.index % 8 == 5:
                 harmony.harmony = [2, 5, 7, 11]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 11]
 
-            elif harmony.index % 9 == 6:
+            elif harmony.index % 8 == 6:
                 harmony.harmony = [0, 4, 7, 10]
                 harmony.scale = [0, 2, 4, 5, 7, 9, 10]
-            elif harmony.index % 9 == 7:
+            elif harmony.index % 8 == 7:
                 harmony.harmony = [5, 9, 0, 3]
                 harmony.scale = [0, 2, 3, 5, 7, 9, 10]
-            elif harmony.index % 9 == 8:
-                harmony.harmony = [0, 4, 7, 10]
-                harmony.scale = [0, 2, 4, 5, 7, 9, 10]
 
 
         for instrument in self.music.instruments:
             offset = 0
             duration_remaining = self.duration_quarters
-            while duration_remaining > 40.0:
+            while duration_remaining > 50.0:
                 lick = Lick(instrument=instrument)
                 sequence = Sequence(lick, instrument, repetitions=random.randint(3, 10))
                 duration_remaining -= sequence.duration
@@ -269,7 +266,7 @@ class Movement1(object):
                             pitch_options.remove(previous_pitch)
 
                         harmonies = now['harmony']
-                        print harmonies
+
                         if len(harmonies) > 1:
                             harmony_options = list(set(harmonies[0].harmony).intersection(*[h.harmony for h in harmonies]))
                             if not harmony_options or random.random() < .2:
@@ -288,7 +285,6 @@ class Movement1(object):
                         if not pitch_options:
                             pitch_options = range(pitch - 8, pitch + 9)
                             pitch_options = [p for p in pitch_options if p % 12 in harmony_options]
-                        print pitch_options
 
                         pitch = random.choice(pitch_options)
                         previous_pitch = pitch
