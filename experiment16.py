@@ -7,7 +7,6 @@ import argparse
 import numpy as np
 
 from music_tools3 import Music
-from sections2 import Layers
 import utils
 
 
@@ -22,20 +21,19 @@ class Movement1(object):
 
         self.pick_duration_and_bpm()
 
-        m = self.music = Music(
+        self.music = Music(
             part_names=self.part_names,
-            starting_tempo_bpm=self.bpm,
+            bpm=self.bpm,
             output_dir_name='experiment16',
-            n_quarters=self.n_quarters,
-            ticks_per_quarter=self.ticks_per_quarter,
+            n_quarters=self.n_quarters
         )
+        self.instruments = self.music.instruments
+        self.layers = self.music.layers
 
         self.make_music()
 
-        for i in self.music.instruments:
-            i.closeout()
-
-        print 'Done making the music. Starting notation.'
+        self.music.closeout()
+        self.music.notate()
 
     def pick_duration_and_bpm(self):
         min_seconds = 8  # 135
@@ -55,11 +53,6 @@ class Movement1(object):
         self.duration_seconds = self.bar_duration_seconds * self.n_bars
         self.duration_quarters = float(self.n_quarters)
 
-        self.ticks_per_quarter = 32
-        self.n_ticks = self.n_quarters * self.ticks_per_quarter
-
-        self.layers = Layers(self.n_quarters, self.ticks_per_quarter, self.bpm)
-
     def put_fragment(self, fragment, instrument, offset):
         for pitch, duration in fragment:
             instrument.put_note(offset, duration, pitch)
@@ -71,7 +64,8 @@ class Movement1(object):
         vibes = self.music.vibraphone
         bass = self.music.bass
 
-        sixteenths = self.layers['sixteenths']
+        sixteenths = self.layers.sixteenths
+        # self.layers.add_layer('rhythm', [3, 3, 2] * self.layers.n_halves)
 
         weight_options = utils.scale_weights([6 ** x for x in range(1, 7)])
         weights = [random.choice(weight_options) for _ in range(8)]
@@ -85,23 +79,17 @@ class Movement1(object):
         }
 
         notes = []
-        offset = 0
         for sixteenth in sixteenths:
             weight = weights[sixteenth.index % len(weights)]
             for instrument in [vibes]:  #, bass_clarinet, vibes, bass]:
                 if random.random() > weight:
-                    instrument.put_note(offset, .25, pitches[instrument.part_name])
+                    instrument.put_note(sixteenth.offset, .25, pitches[instrument.part_name])
                 else:
-                    instrument.put_note(offset, .25, None)
-            offset += .25
-
-    def notate(self):
-        self.music.notate()
+                    instrument.put_note(sixteenth.offset, .25, None)
 
 
 def utah2018():
     m1 = Movement1()
-    m1.notate()
 
 
 if __name__ == '__main__':
