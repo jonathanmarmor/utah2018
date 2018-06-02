@@ -1,27 +1,3 @@
-"""Usage
-
-import numpy as np
-
-from marimba_samples import Marimba
-from audio import Audio
-
-marimba = Marimba()
-audio_duration_seconds = 120
-audio = Audio(audio_duration_seconds)
-len_audio = len(audio)
-
-layer_1 = Sections(4, len_audio)
-layer_2 = Sections([1, 1, 2, 1, 1, 2], len_audio)
-
-offsets = [int(round(o)) for o in np.linspace(0, len_audio, 16, endpoint=False)]
-for offset in offsets:
-    layer_1_index = layer_1.get_by_sample_offset(offset).index
-    layer_2_index = layer_2.get_by_sample_offset(offset).index
-    print offset, layer_1_index, layer_2_index
-
-"""
-
-
 import numpy as np
 
 from utils import scale

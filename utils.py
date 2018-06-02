@@ -42,6 +42,11 @@ def scale(x, original_low, original_high, target_low=0.0, target_high=1.0):
     return ((target_high - target_low) * (float(x) - original_low)) / (original_high - original_low) + target_low
 
 
+def scale_weights(seq, target_low=0.0, target_high=1.0):
+    total = sum(seq)
+    return [scale(item, 0.0, total, target_low=target_low, target_high=target_high) for item in seq]
+
+
 def seconds_to_samples(seconds, sample_rate=44100):
     return int(round(seconds * sample_rate))
 
@@ -86,15 +91,15 @@ def find_loops(seq):
 
 
 
-def weighted_choice(options, weights):
-    """Choose an item from options using weights."""
-    sum_of_weights = sum(weights)
-    rand = random.uniform(0, sum_of_weights)
-    total = 0
-    for item, weight in zip(options, weights):
-        total += weight
-        if rand < total:
-            return item
+def weighted_choice(indexes, weights):
+    # Make weights sum to 1.0
+    sum_weights = float(sum(weights))
+    weights = [w / sum_weights for w in weights]
+
+    # Weighted choice
+    index = np.random.choice(indexes, p=weights)
+
+    return index, weights
 
 
 def group(iterable, n):
@@ -268,6 +273,15 @@ def split_list(lst, n_chunks):
     [0, 1], [2, 3], [4, 5]
     >>> list(split_list(range(7), 3))
     [0, 1], [2, 3, 4], [5, 6]
+
+    # TODO: Right now, this isn't symetrical
+    >>> list(split_list(range(12), 8))
+    >>> [[0], [1, 2], [3], [4, 5], [6], [7, 8], [9], [10, 11]]
+    # So it we could reverse the grouping in one of the halves
+    >>> list(split_list(range(12), 8))
+    >>> [[0], [1, 2], [3], [4, 5], [6, 7], [8], [9, 10], [11]]
+    # Or
+    >>> [[0, 1], [2], [3, 4], [5], [6], [7, 8], [9], [10, 11]]
 
     '''
     chunk_size = len(lst) / float(n_chunks)
