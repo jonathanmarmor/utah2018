@@ -2,7 +2,7 @@
 
 from notation_tools import Notation
 from instrument_data import instrument_data
-import utils
+from utils import split_list, flatten
 from sections2 import Layers
 
 
@@ -59,13 +59,13 @@ class Instrument(object):
         self.lowest_note = self.range[0]
         self.highest_note = self.range[-1]
 
-        registers = list(utils.split_list(self.range, n_chunks=n_chunks))
+        registers = list(split_list(self.range, n_chunks=n_chunks))
 
         self.middle_register = registers[3]  # assuming 7 divisions
         self.highest_register = registers[-1]
         self.lowest_register = registers[0]
-        self.safe_register = utils.flatten(registers[1:-1])
-        self.very_safe_register = utils.flatten(registers[2:-2])
+        self.safe_register = flatten(registers[1:-1])
+        self.very_safe_register = flatten(registers[2:-2])
 
     def append_note(self, duration, pitch=None):
         self.notes.sort(key=lambda x: x.next_offset)

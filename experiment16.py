@@ -1,13 +1,9 @@
 #!/usr/bin/env python
 
 import random
-import collections
-import argparse
-
-import numpy as np
 
 from music_tools3 import Music
-import utils
+from utils import scale_weights
 
 
 class Movement1(object):
@@ -58,6 +54,9 @@ class Movement1(object):
             instrument.put_note(offset, duration, pitch)
             offset += duration
 
+    # def propose_fragment(self, fragment, instrument, offset):
+
+
     def make_music(self):
         oboe = self.music.oboe
         bass_clarinet = self.music.bass_clarinet
@@ -67,7 +66,7 @@ class Movement1(object):
         sixteenths = self.layers.sixteenths
         # self.layers.add_layer('rhythm', [3, 3, 2] * self.layers.n_halves)
 
-        weight_options = utils.scale_weights([6 ** x for x in range(1, 7)])
+        weight_options = scale_weights([6 ** x for x in range(1, 7)])
         weights = [random.choice(weight_options) for _ in range(8)]
         print weights
 

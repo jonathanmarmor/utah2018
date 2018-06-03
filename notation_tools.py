@@ -1,7 +1,33 @@
 import datetime
 import os
 
-import music21
+from music21 import environment
+from music21.metadata import Metadata
+from music21.stream import Score, Part
+from music21.tempo import MetronomeMark
+from music21.duration import Duration
+from music21.meter import TimeSignature
+from music21.note import Rest
+from music21.pitch import Pitch
+from music21.chord import Chord
+from music21.instrument import (
+    Violin,
+    Flute,
+    Oboe,
+    Clarinet,
+    BassClarinet,
+    Saxophone,
+    Trumpet,
+    Bass,
+    Percussion,
+    EnglishHorn,
+    Recorder,
+    BaritoneSaxophone,
+    Guitar,
+    Organ,
+    Piano,
+    Vibraphone,
+)
 
 from instrument_data import instrument_data
 
@@ -24,37 +50,37 @@ def show(stream):
 
 
 def get_music21_user_settings_path():
-    user_settings = music21.environment.UserSettings()
+    user_settings = environment.UserSettings()
     return user_settings.getSettingsPath()
 
 
 def print_music21_user_settings():
-    for key in sorted(music21.environment.keys()):
+    for key in sorted(environment.keys()):
         try:
-            value = music21.environment.get(key)
-        except music21.environment.EnvironmentException:
+            value = environment.get(key)
+        except environment.EnvironmentException:
             value = ''
         print '{:<25} {}'.format(key, value)
 
 
 instrument_classes = {
-    'violin': music21.instrument.Violin,
-    'flute': music21.instrument.Flute,
-    'oboe': music21.instrument.Oboe,
-    'clarinet': music21.instrument.Clarinet,
-    'bass_clarinet': music21.instrument.BassClarinet,
-    'alto_saxophone': music21.instrument.Saxophone,
-    'trumpet': music21.instrument.Trumpet,
-    'bass': music21.instrument.Bass,
-    'percussion': music21.instrument.Percussion,
-    'english_horn': music21.instrument.EnglishHorn,
-    'alto_recorder': music21.instrument.Recorder,
-    'soprano_recorder': music21.instrument.Recorder,
-    'baritone_saxophone': music21.instrument.BaritoneSaxophone,
-    'guitar': music21.instrument.Guitar,
-    'organ': music21.instrument.Organ,
-    'piano': music21.instrument.Piano,
-    'vibraphone': music21.instrument.Vibraphone,
+    'violin': Violin,
+    'flute': Flute,
+    'oboe': Oboe,
+    'clarinet': Clarinet,
+    'bass_clarinet': BassClarinet,
+    'alto_saxophone': Saxophone,
+    'trumpet': Trumpet,
+    'bass': Bass,
+    'percussion': Percussion,
+    'english_horn': EnglishHorn,
+    'alto_recorder': Recorder,
+    'soprano_recorder': Recorder,
+    'baritone_saxophone': BaritoneSaxophone,
+    'guitar': Guitar,
+    'organ': Organ,
+    'piano': Piano,
+    'vibraphone': Vibraphone,
 }
 
 for name in instrument_data:
@@ -91,12 +117,12 @@ def make_music21_score(
         ):
     if not timestamp:
         timestamp = datetime.datetime.utcnow()
-    metadata = music21.metadata.Metadata()
+    metadata = Metadata()
     metadata.title = title
     metadata.composer = composer
     metadata.date = timestamp.strftime('%Y/%m/%d')
 
-    score = music21.stream.Score()
+    score = Score()
     score.insert(0, metadata)
 
     for part_name in part_names:
@@ -105,17 +131,17 @@ def make_music21_score(
 
         instrument = instrument_data[instrument_name]
 
-        part = music21.stream.Part()
+        part = Part()
 
-        metronome_mark = music21.tempo.MetronomeMark(
+        metronome_mark = MetronomeMark(
             number=starting_tempo_bpm,
-            referent=music21.duration.Duration(starting_tempo_quarter_duration)
+            referent=Duration(starting_tempo_quarter_duration)
         )
         part.append(metronome_mark)
 
         if time_signature:
             # Should be a string like '12/8'
-            music21_time_signature = music21.meter.TimeSignature(time_signature)
+            music21_time_signature = TimeSignature(time_signature)
             part.append(music21_time_signature)
 
         m21_instrument = instrument['class']()
@@ -139,20 +165,20 @@ def make_music21_score(
 
 def make_music21_note(pitch_number=None, duration=1.0):
     if pitch_number == None or pitch_number == 'rest':
-        n = music21.note.Rest()
+        n = Rest()
     elif isinstance(pitch_number, list):
-        pitches = [music21.pitch.Pitch(p) for p in pitch_number]
+        pitches = [Pitch(p) for p in pitch_number]
         for p in pitches:
             if p.accidental.name is 'natural':
                 p.accidental = None
-        n = music21.chord.Chord(pitches)
+        n = Chord(pitches)
     else:
-        p = music21.pitch.Pitch(pitch_number)
+        p = Pitch(pitch_number)
         if p.accidental.name is 'natural':
             p.accidental = None
-        n = music21.note.Note(p)
+        n = Note(p)
 
-    d = music21.duration.Duration()
+    d = Duration()
     d.quarterLength = duration
     n.duration = d
 
@@ -224,7 +250,7 @@ class Notation(object):
             os.makedirs(self.output_dir)
 
         # Set up temp file directory
-        music21.environment.set('directoryScratch', self.output_dir)
+        environment.set('directoryScratch', self.output_dir)
 
     def show(self):
         show(self._score)
