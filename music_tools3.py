@@ -93,9 +93,12 @@ class Instrument(object):
             result.append(note)
         return result
 
-    def find_openings(self, duration):
+    def find_openings(self, duration, window_offset=0, window_duration=None):
+        if window_duration == None:
+            window_duration = self.ticks.duration_quarters
         openings = []
-        for tick in self.ticks:
+        ticks = self.ticks.get(window_offset, window_duration)
+        for tick in ticks:
             if not self.get(tick.offset, duration):
                 openings.append(tick.offset)
         return openings
@@ -230,14 +233,35 @@ class Music(object):
         instrument = self.grid[part_id]
         instrument.put_note(offset, duration, pitch=pitch)
 
-    def get_context(self, part_id, offset, duration, pitch=None):
+    def get_context(self, part_id, offset, duration):
         '''Get all the things that are happening relative to a duration in an instrument.
 
             - Notes being played by other instruments
             - Metrical layers
             - Other user-defined layers (e.g, form, harmonies, registers, etc)
         '''
-
         notes_context = self.get(offset, duration)
         layers_context = self.layers.get(offset, duration)
-        return notes_context, layers_context
+
+        pitches = []
+        for inst in notes_context:
+            if inst == part_id:
+                continue
+            for note in notes_context[inst]:
+                if isinstance(note.pitch, (list, tuple)):
+                    for p in note.pitch:
+                        pitches.append(p)
+                else:
+                    pitches.append(note.pitch)
+        pitches.sort()
+        pitch_classes = sorted(list(set([p % 12 for p in pitches])))
+
+        analysis = {
+            'pitches': pitches,
+            'pitch_classes': pitch_classes,
+            # TODO: 'previous_note': , # previous note in this instrument
+            # TODO: 'next_note': , # next note in this instrument
+
+        }
+
+        return notes_context, layers_context, analysis

@@ -275,6 +275,10 @@ def split_list(lst, n_chunks):
         yield chunk
 
 
+def round_to_sixteenth(flt):
+    return round(flt * 4) / 4
+
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

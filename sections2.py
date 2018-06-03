@@ -25,7 +25,7 @@ from utils import scale
 
 
 class Section(object):
-    def __init__(self, offset, duration, index, of_n_sections, parent):
+    def __init__(self, offset, duration, index, of_n_sections, parent, relative_duration=None):
         self.offset = offset
         self.duration = duration
         self.next_offset = offset + duration
@@ -34,6 +34,7 @@ class Section(object):
         self.of_n_sections = of_n_sections
 
         self.parent = parent
+        self.relative_duration = relative_duration
 
     def __repr__(self):
         return '<Section {} of {}, offset: {}, duration: {}>'.format(
@@ -74,7 +75,14 @@ class Layer(list):
         offset = 0
         index = 0
         for duration in self.durations:
-            section = Section(offset, duration, index, self.n_sections, self)
+            section = Section(
+                offset,
+                duration,
+                index,
+                self.n_sections,
+                self,
+                relative_duration=self.relative_durations[index],
+            )
             self.append(section)
             offset += duration
             index += 1
