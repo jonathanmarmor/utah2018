@@ -5,7 +5,7 @@ import random
 import numpy as np
 
 from music_tools3 import Music
-from utils import round_to_sixteenth
+from utils import round_to_sixteenth, flatten
 
 
 def pick_duration_and_bpm(min_seconds=10, max_seconds=12, min_bpm=40, max_bpm=180):
@@ -49,22 +49,82 @@ bars = m.layers.bars
 
 
 chord_types = [
-    {0, 4, 7},
-    {0, 3, 7},
-    {0, 5, 7},
-    {0, 4, 7, 10},
-    {0, 3, 7, 10},
+    (0,),
+    (0, 4),
+    (0, 8),
+    (0, 5),
+    (0, 7),
+    (0, 4, 7),
+    (0, 3, 8),
+    (0, 5, 9),
+    (0, 3, 7),
+    (0, 4, 9),
+    (0, 5, 8),
+    (0, 5, 7),
+    (0, 2, 7),
+    (0, 5, 10),
+    (0, 4, 7, 11),
+    (0, 3, 7, 8),
+    (0, 4, 5, 9),
+    (0, 1, 5, 8),
+    (0, 4, 7, 10),
+    (0, 3, 6, 8),
+    (0, 3, 5, 9),
+    (0, 2, 6, 9),
+    (0, 3, 7, 10),
+    (0, 4, 7, 9),
+    (0, 3, 5, 8),
+    (0, 2, 5, 9),
+    (0, 2, 4, 7, 11),
+    (0, 2, 5, 9, 10),
+    (0, 3, 7, 8, 10),
+    (0, 4, 5, 7, 9),
+    (0, 1, 3, 5, 8),
+    (0, 2, 4, 7, 10),
+    (0, 2, 5, 8, 10),
+    (0, 3, 6, 8, 10),
+    (0, 3, 5, 7, 9),
+    (0, 2, 4, 6, 9),
+    (0, 3, 5, 7, 10),
+    (0, 2, 4, 7, 9),
+    (0, 2, 5, 7, 10),
+    (0, 3, 5, 8, 10),
+    (0, 2, 5, 7, 9),
+    (0, 2, 3, 7, 10),
+    (0, 1, 5, 8, 10),
+    (0, 4, 7, 9, 11),
+    (0, 3, 5, 7, 8),
+    (0, 2, 4, 5, 9),
 ]
 
+instrument_start = {
+    'oboe': (n_quarters / 8) * 3,
+    'bass_clarinet': (n_quarters / 8) * 2,
+    'vibraphone': 0,
+    'bass': n_quarters / 8,
+}
+
+instrument_register = {
+    'oboe': flatten(oboe.registers[-5:-1]),
+    'bass_clarinet': flatten(bass_clarinet.registers[:4]),
+    'vibraphone': flatten(vibes.registers[1:-1]),
+    'bass': flatten(bass.registers[4:-1]),
+}
 
 failures = 0
-for progress in range(500):
+for progress in range(1200):
     print
     print 'progress', progress
-    duration = random.choice(np.linspace(.25, 3.0, 12))
+
+    duration = random.choice([.5, 1.0, 1.0, 1.0, 1.5, 2.0, 2.5])
 
     inst = random.choice(m.instruments)
-    openings = inst.find_openings(duration, window_offset=0, window_duration=None)
+
+    window_offset = instrument_start[inst.part_id]
+    window_duration = n_quarters - window_offset
+    openings = inst.find_openings(duration, window_offset=window_offset, window_duration=window_duration)
+
+    openings = [o for o in openings if o % .5 == 0]
 
     if not openings:
         failures += 1
@@ -80,7 +140,7 @@ for progress in range(500):
 
     if not existing_harmony:
         print 'no harmony'
-        inst.put_note(offset, duration, pitch=random.choice(inst.safe_register))
+        inst.put_note(offset, duration, pitch=random.choice(instrument_register[inst.part_id]))
         continue
 
     print 'existing_harmony', existing_harmony
@@ -88,13 +148,13 @@ for progress in range(500):
     pitch_class_options = []
     for pc in range(12):
         proposed_harmony = sorted(list(set(existing_harmony + [pc])))
-        proposed_harmony_type = set([p - proposed_harmony[0] for p in proposed_harmony])
-        if any([proposed_harmony_type.issubset(chord_type) for chord_type in chord_types]):
+        proposed_harmony_type = tuple([p - proposed_harmony[0] for p in proposed_harmony])
+        if proposed_harmony_type in chord_types:
             pitch_class_options.append(pc)
     pitch_class_options.sort()
     print 'pitch_class_options', pitch_class_options
-    pitch_options = [p for p in inst.safe_register if p % 12 in pitch_class_options]
-    if pitch_class_options:
+    pitch_options = [p for p in instrument_register[inst.part_id] if p % 12 in pitch_class_options]
+    if pitch_options:
         inst.put_note(offset, duration, pitch=random.choice(pitch_options))
 
 m.closeout()
