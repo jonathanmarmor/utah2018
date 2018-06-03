@@ -2,29 +2,35 @@
 
 import random
 
+import numpy as np
+
 from music_tools3 import Music
-from utils import scale_weights
+from utils import scale_weights, flatten
 
 
 class Movement1(object):
     def __init__(self):
-        self.part_names = (
-            'oboe',
-            'bass_clarinet',
-            'vibraphone',
-            'bass',
-        )
-
         self.pick_duration_and_bpm()
 
         self.music = Music(
-            part_names=self.part_names,
+            part_names=(
+                'oboe',
+                'bass_clarinet',
+                'vibraphone',
+                'bass',
+            ),
             bpm=self.bpm,
             output_dir_name='experiment16',
             n_quarters=self.n_quarters
         )
+        self.part_names = self.music.part_names
         self.instruments = self.music.instruments
         self.layers = self.music.layers
+
+        self.ob = self.music.oboe
+        self.cl = self.music.bass_clarinet
+        self.vib = self.music.vibraphone
+        self.bass = self.music.bass
 
         self.make_music()
 
@@ -32,13 +38,15 @@ class Movement1(object):
         self.music.notate()
 
     def pick_duration_and_bpm(self):
-        min_seconds = 8  # 135
-        max_seconds = 16  # 160
+        min_seconds = 135
+        max_seconds = 160
         target_duration_seconds = random.randint(min_seconds, max_seconds + 1)
+        # target_duration_seconds = 140
 
         min_bpm = 90
         max_bpm = 125
         self.bpm = random.randint(min_bpm, max_bpm + 1)
+        # self.bpm = 110
 
         self.quarter_duration_seconds = 60.0 / self.bpm
         self.bar_duration_seconds = self.quarter_duration_seconds * 4
@@ -56,35 +64,101 @@ class Movement1(object):
 
     # def propose_fragment(self, fragment, instrument, offset):
 
-
     def make_music(self):
-        oboe = self.music.oboe
-        bass_clarinet = self.music.bass_clarinet
-        vibes = self.music.vibraphone
-        bass = self.music.bass
+        for instrument in self.instruments:
+            failures = 0
+            for _ in range(1000):
+                duration = random.choice(np.linspace(.25, 2.0, 8))
+                openings = instrument.find_openings(duration)
+                if openings:
+                    offset = random.choice(openings)
+                    instrument.put_note(offset, duration, pitch=random.choice(flatten(instrument.registers[-4:-1])))
+                else:
+                    failures += 1
+                    if failures > 10:
+                        break
 
-        sixteenths = self.layers.sixteenths
+        # for sixteenth in self.layers.sixteenths:
+        #     if random.random() < .6:
+        #         self.ob.put_note(sixteenth.offset, .25, 77)
+
+        # for note in self.ob.get(12, 5):
+        #     print note
+
+
+
+
+        # self.make_form()
+
+        # self.make_intro()
+        # self.make_first_wedge()
+
+        # # sixteenths = self.layers.sixteenths
         # self.layers.add_layer('rhythm', [3, 3, 2] * self.layers.n_halves)
 
-        weight_options = scale_weights([6 ** x for x in range(1, 7)])
-        weights = [random.choice(weight_options) for _ in range(8)]
-        print weights
+        # # weight_options = scale_weights([6 ** x for x in range(1, 7)])
+        # # weights = [random.choice(weight_options) for _ in range(8)]
+        # # print weights
 
-        pitches = {
-            'oboe': 79,
-            'bass_clarinet': 70,
-            'vibraphone': [60, 67],
-            'bass': 48,
-        }
+        # pitches = {
+        #     'oboe': 79,
+        #     'bass_clarinet': 70,
+        #     'vibraphone': [60, 67],
+        #     'bass': 48,
+        # }
 
-        notes = []
-        for sixteenth in sixteenths:
-            weight = weights[sixteenth.index % len(weights)]
-            for instrument in [vibes]:  #, bass_clarinet, vibes, bass]:
-                if random.random() > weight:
-                    instrument.put_note(sixteenth.offset, .25, pitches[instrument.part_name])
-                else:
-                    instrument.put_note(sixteenth.offset, .25, None)
+        # notes = []
+        # for beat in self.layers.rhythm:
+        #     # weight = weights[sixteenth.index % len(weights)]
+        #     for instrument in [vibes]:  #, bass_clarinet, vibes, bass]:
+        #         instrument.put_note(beat.offset, beat.duration, pitches[instrument.part_name])
+
+        #         # if random.random() > weight:
+        #         #     instrument.put_note(sixteenth.offset, .25, pitches[instrument.part_name])
+        #         # else:
+        #         #     instrument.put_note(sixteenth.offset, .25, None)
+
+    # def make_form(self):
+    #     section_durations = [
+    #         3,
+    #         4,
+    #         4,
+    #         4,
+    #         4,
+    #         1,
+    #         8,
+    #         4,
+    #         4,
+    #         1,
+    #         8,
+    #         8,
+    #         8,
+    #         3,
+    #     ]
+    #     section_names = [
+    #         'intro',
+    #         'verseA',
+    #         'verseB',
+    #         'verseA',
+    #         'verseB',
+    #         'transition',
+    #         'chorus',
+    #         'verseA',
+    #         'verseB',
+    #         'transition',
+    #         'chorus',
+    #         'bridge',
+    #         'chorus',
+    #         'outro',
+    #     ]
+    #     self.layers.add_layer('top_level_form', section_durations)
+    #     for section, name in zip(self.layers.top_level_form, section_names):
+    #         section.name = name
+
+
+
+    # def make_first_wedge(self):
+    #     self.layers.add_layer('rhythm', [3, 3, 2] * self.layers.n_halves)
 
 
 def utah2018():

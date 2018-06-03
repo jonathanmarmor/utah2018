@@ -24,7 +24,7 @@ class Note(object):
             tick.pitch = self.pitch
 
     def __repr__(self):
-        return '<Note - pitch: {} duration: {}>'.format(self.pitch, self.duration)
+        return '<Note: offset: {} duration: {} pitch: {}>'.format(self.offset, self.duration, self.pitch)
 
 
 class Instrument(object):
@@ -59,13 +59,13 @@ class Instrument(object):
         self.lowest_note = self.range[0]
         self.highest_note = self.range[-1]
 
-        registers = list(split_list(self.range, n_chunks=n_chunks))
+        self.registers = list(split_list(self.range, n_chunks=n_chunks))
 
-        self.middle_register = registers[3]  # assuming 7 divisions
-        self.highest_register = registers[-1]
-        self.lowest_register = registers[0]
-        self.safe_register = flatten(registers[1:-1])
-        self.very_safe_register = flatten(registers[2:-2])
+        self.middle_register = self.registers[3]  # assuming 7 divisions
+        self.highest_register = self.registers[-1]
+        self.lowest_register = self.registers[0]
+        self.safe_register = flatten(self.registers[1:-1])
+        self.very_safe_register = flatten(self.registers[2:-2])
 
     def append_note(self, duration, pitch=None):
         self.notes.sort(key=lambda x: x.next_offset)
@@ -78,6 +78,27 @@ class Instrument(object):
         note = Note(offset, duration, ticks, pitch=pitch)
         self.notes.append(note)
         # self.notes.sort(key=lambda x: x.offset)  Probably too expensive to run every time
+
+    def get(self, offset, duration=.25):
+        '''Get all the notes in this instrument happening between offset and offset + duration, where both are quarter durations'''
+        self.notes.sort(key=lambda x: x.offset)
+
+        next_offset = offset + duration
+        result = []
+        for note in self.notes:
+            if note.next_offset <= offset:
+                continue
+            if note.offset >= next_offset:
+                break
+            result.append(note)
+        return result
+
+    def find_openings(self, duration):
+        openings = []
+        for tick in self.ticks:
+            if not self.get(tick.offset, duration):
+                openings.append(tick.offset)
+        return openings
 
     def closeout(self):
         '''Put rests anywhere there aren't notes'''
@@ -202,3 +223,21 @@ class Music(object):
         self.notation.show()
         print 'Done making notation.'
 
+    def get(self, offset, duration=.25):
+        return {i.part_id:i.get(offset, duration=duration) for i in self.instruments}
+
+    def put_note(self, part_id, offset, duration, pitch=None):
+        instrument = self.grid[part_id]
+        instrument.put_note(offset, duration, pitch=pitch)
+
+    def get_context(self, part_id, offset, duration, pitch=None):
+        '''Get all the things that are happening relative to a duration in an instrument.
+
+            - Notes being played by other instruments
+            - Metrical layers
+            - Other user-defined layers (e.g, form, harmonies, registers, etc)
+        '''
+
+        notes_context = self.get(offset, duration)
+        layers_context = self.layers.get(offset, duration)
+        return notes_context, layers_context

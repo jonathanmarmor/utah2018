@@ -7,7 +7,7 @@ from music21.stream import Score, Part
 from music21.tempo import MetronomeMark
 from music21.duration import Duration
 from music21.meter import TimeSignature
-from music21.note import Rest
+from music21.note import Rest, Note
 from music21.pitch import Pitch
 from music21.chord import Chord
 from music21.instrument import (
