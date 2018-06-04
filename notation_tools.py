@@ -28,7 +28,19 @@ from music21.instrument import (
     Piano,
     Vibraphone,
 )
-from music21.articulations import Staccato, Accent
+from music21.articulations import (
+    Staccato,
+    Tenuto,
+
+    Accent,
+
+    Falloff,  # An indeterminantSlide coming after the main note and going down.
+    Plop,     # An indeterminantSlide coming before the main note and going down.
+    Scoop,    # An indeterminantSlide coming before the main note and going up
+    Doit,     # An indeterminantSlide coming after the main note and going up.
+
+    BreathMark,
+)
 
 from instrument_data import instrument_data
 
@@ -164,7 +176,18 @@ def make_music21_score(
     return score
 
 
-def make_music21_note(pitch_number=None, duration=1.0, staccato=False, accent=False):
+def make_music21_note(
+        pitch_number=None,
+        duration=1.0,
+        staccato=False,
+        tenuto=False,
+        accent=False,
+        falloff=False,
+        plop=False,
+        scoop=False,
+        doit=False,
+        breath_mark=False,
+    ):
     if pitch_number == None or pitch_number == 'rest':
         n = Rest()
     elif isinstance(pitch_number, list):
@@ -185,8 +208,20 @@ def make_music21_note(pitch_number=None, duration=1.0, staccato=False, accent=Fa
 
     if staccato:
         n.articulations.append(Staccato())
+    if tenuto:
+        n.articulations.append(Tenuto())
     if accent:
         n.articulations.append(Accent())
+    if falloff:
+        n.articulations.append(Falloff())
+    if plop:
+        n.articulations.append(Plop())
+    if scoop:
+        n.articulations.append(Scoop())
+    if doit:
+        n.articulations.append(Doit())
+    if breath_mark:
+        n.articulations.append(BreathMark())
 
     return n
 
@@ -201,8 +236,31 @@ class Instrument(object):
 
         self.range = instrument_data[self.instrument_name]['range']
 
-    def add_note(self, pitch=None, duration=None, staccato=False, accent=False):
-        m21_note = make_music21_note(pitch, duration, staccato=staccato, accent=accent)
+    def add_note(
+            self,
+            pitch=None,
+            duration=None,
+            staccato=False,
+            tenuto=False,
+            accent=False,
+            falloff=False,
+            plop=False,
+            scoop=False,
+            doit=False,
+            breath_mark=False,
+        ):
+        m21_note = make_music21_note(
+            pitch,
+            duration,
+            staccato=staccato,
+            tenuto=tenuto,
+            accent=accent,
+            falloff=falloff,
+            plop=plop,
+            scoop=scoop,
+            doit=doit,
+            breath_mark=breath_mark,
+        )
         self._music21_part.append(m21_note)
 
 

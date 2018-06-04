@@ -147,7 +147,9 @@ for progress in range(400):
     existing_harmony = analysis['pitch_classes']
 
     # staccato = random.choice([True, False])
+    staccato = False
     # accent = random.choice([True, False])
+    accent = False
 
     if not existing_harmony:
         print 'no harmony'

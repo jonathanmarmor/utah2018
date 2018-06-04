@@ -7,7 +7,21 @@ from sections2 import Layers
 
 
 class Note(object):
-    def __init__(self, offset, duration, ticks, pitch=None, staccato=False, accent=False):
+    def __init__(
+            self,
+            offset,
+            duration,
+            ticks,
+            pitch=None,
+            staccato=False,
+            tenuto=False,
+            accent=False,
+            falloff=False,
+            plop=False,
+            scoop=False,
+            doit=False,
+            breath_mark=False,
+        ):
         self.pitch = pitch
 
         self.offset = offset
@@ -24,7 +38,13 @@ class Note(object):
             tick.pitch = self.pitch
 
         self.staccato = staccato
+        self.tenuto = tenuto
         self.accent = accent
+        self.falloff = falloff
+        self.plop = plop
+        self.scoop = scoop
+        self.doit = doit
+        self.breath_mark = breath_mark
 
     def __repr__(self):
         return '<Note: offset: {} duration: {} pitch: {}>'.format(self.offset, self.duration, self.pitch)
@@ -70,15 +90,65 @@ class Instrument(object):
         self.safe_register = flatten(self.registers[1:-1])
         self.very_safe_register = flatten(self.registers[2:-2])
 
-    def append_note(self, duration, pitch=None):
+    def append_note(
+            self,
+            duration,
+            pitch=None,
+            staccato=False,
+            tenuto=False,
+            accent=False,
+            falloff=False,
+            plop=False,
+            scoop=False,
+            doit=False,
+            breath_mark=False,
+        ):
         self.notes.sort(key=lambda x: x.next_offset)
         last_note = self.notes[-1]
-        self.put_note(last_note.next_offset, duration, pitch=pitch)
+        self.put_note(
+            last_note.next_offset,
+            duration,
+            pitch=pitch,
+            staccato=staccato,
+            tenuto=tenuto,
+            accent=accent,
+            falloff=falloff,
+            plop=plop,
+            scoop=scoop,
+            doit=doit,
+            breath_mark=breath_mark,
+        )
 
-    def put_note(self, offset, duration, pitch=None, staccato=False, accent=False):
+    def put_note(
+            self,
+            offset,
+            duration,
+            pitch=None,
+            staccato=False,
+            tenuto=False,
+            accent=False,
+            falloff=False,
+            plop=False,
+            scoop=False,
+            doit=False,
+            breath_mark=False,
+        ):
         # offset and duration in quarter durations
         ticks = self.ticks.get(offset, duration)
-        note = Note(offset, duration, ticks, pitch=pitch, staccato=staccato, accent=accent)
+        note = Note(
+            offset,
+            duration,
+            ticks,
+            pitch=pitch,
+            staccato=staccato,
+            tenuto=tenuto,
+            accent=accent,
+            falloff=falloff,
+            plop=plop,
+            scoop=scoop,
+            doit=doit,
+            breath_mark=breath_mark,
+        )
         self.notes.append(note)
         # self.notes.sort(key=lambda x: x.offset)  Probably too expensive to run every time
 
@@ -224,7 +294,18 @@ class Music(object):
         for instrument in self.instruments:
             notation_instrument = self.notation.parts_by_name[instrument.part_name]
             for note in instrument.finalized_notes:
-                notation_instrument.add_note(note.pitch, note.duration, staccato=note.staccato, accent=note.accent)
+                notation_instrument.add_note(
+                    note.pitch,
+                    note.duration,
+                    staccato=note.staccato,
+                    tenuto=note.tenuto,
+                    accent=note.accent,
+                    falloff=note.falloff,
+                    plop=note.plop,
+                    scoop=note.scoop,
+                    doit=note.doit,
+                    breath_mark=note.breath_mark,
+                )
 
         self.notation.show()
         print 'Done making notation.'
