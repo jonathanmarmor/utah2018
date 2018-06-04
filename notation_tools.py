@@ -28,6 +28,7 @@ from music21.instrument import (
     Piano,
     Vibraphone,
 )
+from music21.articulations import Staccato, Accent
 
 from instrument_data import instrument_data
 
@@ -163,7 +164,7 @@ def make_music21_score(
     return score
 
 
-def make_music21_note(pitch_number=None, duration=1.0):
+def make_music21_note(pitch_number=None, duration=1.0, staccato=False, accent=False):
     if pitch_number == None or pitch_number == 'rest':
         n = Rest()
     elif isinstance(pitch_number, list):
@@ -182,6 +183,11 @@ def make_music21_note(pitch_number=None, duration=1.0):
     d.quarterLength = duration
     n.duration = d
 
+    if staccato:
+        n.articulations.append(Staccato())
+    if accent:
+        n.articulations.append(Accent())
+
     return n
 
 
@@ -195,8 +201,8 @@ class Instrument(object):
 
         self.range = instrument_data[self.instrument_name]['range']
 
-    def add_note(self, pitch=None, duration=None):
-        m21_note = make_music21_note(pitch, duration)
+    def add_note(self, pitch=None, duration=None, staccato=False, accent=False):
+        m21_note = make_music21_note(pitch, duration, staccato=staccato, accent=accent)
         self._music21_part.append(m21_note)
 
 

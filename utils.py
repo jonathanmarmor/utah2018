@@ -75,7 +75,6 @@ def find_loops(seq):
     return loops
 
 
-
 def weighted_choice(indexes, weights):
     # Make weights sum to 1.0
     sum_weights = float(sum(weights))

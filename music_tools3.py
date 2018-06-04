@@ -7,7 +7,7 @@ from sections2 import Layers
 
 
 class Note(object):
-    def __init__(self, offset, duration, ticks, pitch=None):
+    def __init__(self, offset, duration, ticks, pitch=None, staccato=False, accent=False):
         self.pitch = pitch
 
         self.offset = offset
@@ -22,6 +22,9 @@ class Note(object):
         for tick in self.ticks:
             tick.note = self
             tick.pitch = self.pitch
+
+        self.staccato = staccato
+        self.accent = accent
 
     def __repr__(self):
         return '<Note: offset: {} duration: {} pitch: {}>'.format(self.offset, self.duration, self.pitch)
@@ -72,10 +75,10 @@ class Instrument(object):
         last_note = self.notes[-1]
         self.put_note(last_note.next_offset, duration, pitch=pitch)
 
-    def put_note(self, offset, duration, pitch=None):
+    def put_note(self, offset, duration, pitch=None, staccato=False, accent=False):
         # offset and duration in quarter durations
         ticks = self.ticks.get(offset, duration)
-        note = Note(offset, duration, ticks, pitch=pitch)
+        note = Note(offset, duration, ticks, pitch=pitch, staccato=staccato, accent=accent)
         self.notes.append(note)
         # self.notes.sort(key=lambda x: x.offset)  Probably too expensive to run every time
 
@@ -221,7 +224,7 @@ class Music(object):
         for instrument in self.instruments:
             notation_instrument = self.notation.parts_by_name[instrument.part_name]
             for note in instrument.finalized_notes:
-                notation_instrument.add_note(note.pitch, note.duration)
+                notation_instrument.add_note(note.pitch, note.duration, staccato=note.staccato, accent=note.accent)
 
         self.notation.show()
         print 'Done making notation.'

@@ -48,6 +48,11 @@ halves = m.layers.halves
 bars = m.layers.bars
 
 
+
+
+
+
+
 chord_types = [
     (0,),
     (0, 4),
@@ -63,11 +68,11 @@ chord_types = [
     (0, 5, 7),
     (0, 2, 7),
     (0, 5, 10),
-    (0, 4, 7, 11),
-    (0, 3, 7, 8),
-    (0, 4, 5, 9),
-    (0, 1, 5, 8),
-    (0, 4, 7, 10),
+    # (0, 4, 7, 11),
+    # (0, 3, 7, 8),
+    # (0, 4, 5, 9),
+    # (0, 1, 5, 8),
+    # (0, 4, 7, 10),
     (0, 3, 6, 8),
     (0, 3, 5, 9),
     (0, 2, 6, 9),
@@ -75,53 +80,56 @@ chord_types = [
     (0, 4, 7, 9),
     (0, 3, 5, 8),
     (0, 2, 5, 9),
-    (0, 2, 4, 7, 11),
-    (0, 2, 5, 9, 10),
-    (0, 3, 7, 8, 10),
-    (0, 4, 5, 7, 9),
-    (0, 1, 3, 5, 8),
-    (0, 2, 4, 7, 10),
-    (0, 2, 5, 8, 10),
-    (0, 3, 6, 8, 10),
-    (0, 3, 5, 7, 9),
-    (0, 2, 4, 6, 9),
-    (0, 3, 5, 7, 10),
-    (0, 2, 4, 7, 9),
-    (0, 2, 5, 7, 10),
-    (0, 3, 5, 8, 10),
-    (0, 2, 5, 7, 9),
-    (0, 2, 3, 7, 10),
-    (0, 1, 5, 8, 10),
-    (0, 4, 7, 9, 11),
-    (0, 3, 5, 7, 8),
-    (0, 2, 4, 5, 9),
+    # (0, 2, 4, 7, 11),
+    # (0, 2, 5, 9, 10),
+    # (0, 3, 7, 8, 10),
+    # (0, 4, 5, 7, 9),
+    # (0, 1, 3, 5, 8),
+    # (0, 2, 4, 7, 10),
+    # (0, 2, 5, 8, 10),
+    # (0, 3, 6, 8, 10),
+    # (0, 3, 5, 7, 9),
+    # (0, 2, 4, 6, 9),
+    # (0, 3, 5, 7, 10),
+    # (0, 2, 4, 7, 9),
+    # (0, 2, 5, 7, 10),
+    # (0, 3, 5, 8, 10),
+    # (0, 2, 5, 7, 9),
+    # (0, 2, 3, 7, 10),
+    # (0, 1, 5, 8, 10),
+    # (0, 4, 7, 9, 11),
+    # (0, 3, 5, 7, 8),
+    # (0, 2, 4, 5, 9),
 ]
 
 instrument_start = {
-    'oboe': (n_quarters / 8) * 3,
-    'bass_clarinet': (n_quarters / 8) * 2,
+    'oboe': (n_quarters / 16) * 3,
+    'bass_clarinet': (n_quarters / 16) * 2,
     'vibraphone': 0,
-    'bass': n_quarters / 8,
+    'bass': n_quarters / 16,
 }
 
 instrument_register = {
-    'oboe': flatten(oboe.registers[-5:-1]),
-    'bass_clarinet': flatten(bass_clarinet.registers[:4]),
-    'vibraphone': flatten(vibes.registers[1:-1]),
+    'oboe': flatten(oboe.registers[-2:-1]),
+    'bass_clarinet': flatten(bass_clarinet.registers[1:3]),
+    'vibraphone': flatten(vibes.registers[2:-2]),
     'bass': flatten(bass.registers[4:-1]),
 }
 
 failures = 0
-for progress in range(1200):
+for progress in range(400):
     print
     print 'progress', progress
+
+    # GENERATE CANDIDATES
 
     duration = random.choice([.5, 1.0, 1.0, 1.0, 1.5, 2.0, 2.5])
 
     inst = random.choice(m.instruments)
+    print inst.part_id
 
     window_offset = instrument_start[inst.part_id]
-    window_duration = n_quarters - window_offset
+    window_duration = n_quarters - window_offset - (n_quarters / 2)
     openings = inst.find_openings(duration, window_offset=window_offset, window_duration=window_duration)
 
     openings = [o for o in openings if o % .5 == 0]
@@ -138,9 +146,12 @@ for progress in range(1200):
 
     existing_harmony = analysis['pitch_classes']
 
+    # staccato = random.choice([True, False])
+    # accent = random.choice([True, False])
+
     if not existing_harmony:
         print 'no harmony'
-        inst.put_note(offset, duration, pitch=random.choice(instrument_register[inst.part_id]))
+        inst.put_note(offset, duration, pitch=random.choice(instrument_register[inst.part_id]), staccato=staccato, accent=accent)
         continue
 
     print 'existing_harmony', existing_harmony
@@ -155,7 +166,14 @@ for progress in range(1200):
     print 'pitch_class_options', pitch_class_options
     pitch_options = [p for p in instrument_register[inst.part_id] if p % 12 in pitch_class_options]
     if pitch_options:
-        inst.put_note(offset, duration, pitch=random.choice(pitch_options))
+        inst.put_note(offset, duration, pitch=random.choice(pitch_options), staccato=staccato, accent=accent)
+
+    # RANK CANDIDATES
+
+
+
+    # CHOOSE
+
 
 m.closeout()
 m.notate()
