@@ -100,47 +100,6 @@ class Layer(list):
         return result
 
 
-class Layers(dict):
-    def __init__(self, n_quarters, bpm):
-        self.n_quarters = n_quarters
-        self.bpm = bpm
-        self.init_meter()
-
-    def init_meter(self):
-        self.quarter_duration_seconds = 60.0 / self.bpm
-        self.bar_duration_seconds = self.quarter_duration_seconds * 4
-        self.half_note_duration_seconds = self.bar_duration_seconds / 2
-        self.eighth_note_duration_seconds = self.bar_duration_seconds / 8
-        self.sixteenth_note_duration_seconds = self.bar_duration_seconds / 16
-        # self.thirtysecond_note_duration_seconds = self.bar_duration_seconds / 32
-
-        self.n_bars = self.n_quarters / 4
-        self.n_halves = self.n_bars * 2
-        self.n_eighths = self.n_bars * 8
-        self.n_sixteenths = self.n_bars * 16
-        # self.n_thirtyseconds = self.n_bars * 32
-
-        self.duration_seconds = self.bar_duration_seconds * self.n_bars
-
-        # self.add_layer('thirtyseconds', self.n_thirtyseconds)
-        self.add_layer('sixteenths', self.n_sixteenths)
-        self.add_layer('eighths', self.n_eighths)
-        self.add_layer('quarters', self.n_quarters)
-        self.add_layer('halves', self.n_halves)
-        self.add_layer('bars', self.n_bars)
-        self.meter_layers = [self.bars, self.halves, self.quarters, self.eighths, self.sixteenths]
-
-    def add_layer(self, name, sections):
-        self[name] = Layer(sections, self.n_quarters)
-        setattr(self, name, self[name])
-        return self[name]
-
-    def get(self, offset, duration=0.25, layer_name=None):
-        if layer_name:
-            return self[layer_name].get(offset, duration)
-        return {layer_name:self[layer_name].get(offset, duration) for layer_name in self}
-
-
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

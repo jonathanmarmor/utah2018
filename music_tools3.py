@@ -3,7 +3,7 @@
 from notation_tools import Notation
 from instrument_data import instrument_data
 from utils import split_list, flatten
-from sections2 import Layers
+from sections2 import Layer
 
 
 class Note(object):
@@ -225,7 +225,8 @@ class Music(object):
         self.bpm = bpm
         self.n_quarters = n_quarters
 
-        self.layers = Layers(self.n_quarters, self.bpm)
+        self.layers = {}
+        self._init_meter()
 
         self._setup_parts()
 
@@ -243,7 +244,7 @@ class Music(object):
             self.instruments.append(instrument)
             self.grid[instrument.part_id] = instrument
 
-            instrument.ticks = self.layers.add_layer(instrument.part_id + '_ticks', self.layers.n_sixteenths)
+            instrument.ticks = self.add_layer(instrument.part_id + '_ticks', self.n_sixteenths)
             for tick in instrument.ticks:
                 tick.note = None
                 tick.note_start = False
@@ -325,7 +326,7 @@ class Music(object):
             - Other user-defined layers (e.g, form, harmonies, registers, etc)
         '''
         notes_context = self.get(offset, duration)
-        layers_context = self.layers.get(offset, duration)
+        layers_context = self.get_sections(offset, duration)
 
         pitches = []
         for inst in notes_context:
@@ -349,3 +350,38 @@ class Music(object):
         }
 
         return notes_context, layers_context, analysis
+
+    def _init_meter(self):
+        self.quarter_duration_seconds = 60.0 / self.bpm
+        self.bar_duration_seconds = self.quarter_duration_seconds * 4
+        self.half_note_duration_seconds = self.bar_duration_seconds / 2
+        self.eighth_note_duration_seconds = self.bar_duration_seconds / 8
+        self.sixteenth_note_duration_seconds = self.bar_duration_seconds / 16
+        # self.thirtysecond_note_duration_seconds = self.bar_duration_seconds / 32
+
+        self.n_bars = self.n_quarters / 4
+        self.n_halves = self.n_bars * 2
+        self.n_eighths = self.n_bars * 8
+        self.n_sixteenths = self.n_bars * 16
+        # self.n_thirtyseconds = self.n_bars * 32
+
+        self.duration_seconds = self.bar_duration_seconds * self.n_bars
+
+        # self.add_layer('thirtyseconds', self.n_thirtyseconds)
+        self.add_layer('sixteenths', self.n_sixteenths)
+        self.add_layer('eighths', self.n_eighths)
+        self.add_layer('quarters', self.n_quarters)
+        self.add_layer('halves', self.n_halves)
+        self.add_layer('bars', self.n_bars)
+        self.meter_layers = [self.bars, self.halves, self.quarters, self.eighths, self.sixteenths]
+
+    def add_layer(self, name, sections):
+        layer = Layer(sections, self.n_quarters)
+        self.layers[name] = layer
+        setattr(self, name, layer)
+        return layer
+
+    def get_sections(self, offset, duration=0.25, layer_name=None):
+        if layer_name:
+            return self.layers[layer_name].get(offset, duration)
+        return {layer_name:self.layers[layer_name].get(offset, duration) for layer_name in self.layers}

@@ -41,11 +41,11 @@ bass_clarinet = m.bass_clarinet
 vibes = m.vibraphone
 bass = m.bass
 
-sixteenths = m.layers.sixteenths
-eighths = m.layers.eighths
-quarters = m.layers.quarters
-halves = m.layers.halves
-bars = m.layers.bars
+sixteenths = m.sixteenths
+eighths = m.eighths
+quarters = m.quarters
+halves = m.halves
+bars = m.bars
 
 
 
