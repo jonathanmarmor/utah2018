@@ -102,12 +102,22 @@ chord_types = [
     # (0, 2, 4, 5, 9),
 ]
 
-instrument_start = {
-    'oboe': (n_quarters / 16) * 3,
-    'bass_clarinet': (n_quarters / 16) * 2,
-    'vibraphone': 0,
-    'bass': n_quarters / 16,
-}
+
+
+section_duration, remainder = divmod(m.n_quarters, 16)
+form = m.add_layer('form', ([section_duration] * 16) +  [remainder])
+
+for section in form:
+    section.instruments = ['vibraphone']
+    if section.index > 0:
+        section.instruments.append('bass')
+    if section.index > 1:
+        section.instruments.append('bass_clarinet')
+    if section.index > 2:
+        section.instruments.append('oboe')
+
+    section.density = int(round(section.duration * (section.index + .5)))
+
 
 instrument_register = {
     'oboe': flatten(oboe.registers[-2:-1]),
@@ -116,65 +126,70 @@ instrument_register = {
     'bass': flatten(bass.registers[4:-1]),
 }
 
-failures = 0
-for progress in range(400):
-    print
-    print 'progress', progress
 
-    # GENERATE CANDIDATES
+for section in form:
+    failures = 0
+    for progress in range(section.density):
+        print
+        print 'progress', progress
 
-    duration = random.choice([.5, 1.0, 1.0, 1.0, 1.5, 2.0, 2.5])
+        # TODO: separate into clearly divided phases of generating candidates,
+        #       ranking the candidates, and choosing from the ranked candidates
 
-    inst = random.choice(m.instruments)
-    print inst.part_id
+        # GENERATE CANDIDATES
 
-    window_offset = instrument_start[inst.part_id]
-    window_duration = n_quarters - window_offset - (n_quarters / 2)
-    openings = inst.find_openings(duration, window_offset=window_offset, window_duration=window_duration)
+        duration = random.choice([.5, 1.0, 1.0, 1.0, 1.5, 2.0, 2.5])
 
-    openings = [o for o in openings if o % .5 == 0]
+        instrument_name = random.choice(section.instruments)
+        inst = m.grid[instrument_name]
+        print inst.part_id
 
-    if not openings:
-        failures += 1
-        if failures > 100:
-            break
-        continue
+        openings = inst.find_openings(
+            duration,
+            window_offset=section.offset,
+            window_duration=section.duration,
+        )
 
-    offset = random.choice(openings)
+        openings = [o for o in openings if o % .5 == 0]
 
-    notes_context, layers_context, analysis = m.get_context(inst.part_id, offset, duration)
+        if not openings:
+            failures += 1
+            if failures > 100:
+                print 'failure x100'
+                break
+            continue
 
-    existing_harmony = analysis['pitch_classes']
+        offset = random.choice(openings)
 
-    # staccato = random.choice([True, False])
-    staccato = False
-    # accent = random.choice([True, False])
-    accent = False
+        notes_context, layers_context, analysis = m.get_context(inst.part_id, offset, duration)
 
-    if not existing_harmony:
-        print 'no harmony'
-        inst.put_note(offset, duration, pitch=random.choice(instrument_register[inst.part_id]), staccato=staccato, accent=accent)
-        continue
+        existing_harmony = analysis['pitch_classes']
 
-    print 'existing_harmony', existing_harmony
+        if not existing_harmony:
+            print 'no harmony'
+            pitch = random.choice(instrument_register[inst.part_id])
+            inst.put_note(offset, duration, pitch=pitch)
+            continue
 
-    pitch_class_options = []
-    for pc in range(12):
-        proposed_harmony = sorted(list(set(existing_harmony + [pc])))
-        proposed_harmony_type = tuple([p - proposed_harmony[0] for p in proposed_harmony])
-        if proposed_harmony_type in chord_types:
-            pitch_class_options.append(pc)
-    pitch_class_options.sort()
-    print 'pitch_class_options', pitch_class_options
-    pitch_options = [p for p in instrument_register[inst.part_id] if p % 12 in pitch_class_options]
-    if pitch_options:
-        inst.put_note(offset, duration, pitch=random.choice(pitch_options), staccato=staccato, accent=accent)
+        print 'existing_harmony', existing_harmony
 
-    # RANK CANDIDATES
+        pitch_class_options = []
+        for pc in range(12):
+            proposed_harmony = sorted(list(set(existing_harmony + [pc])))
+            proposed_harmony_type = tuple([p - proposed_harmony[0] for p in proposed_harmony])
+            if proposed_harmony_type in chord_types:
+                pitch_class_options.append(pc)
+        pitch_class_options.sort()
+        print 'pitch_class_options', pitch_class_options
+        pitch_options = [p for p in instrument_register[inst.part_id] if p % 12 in pitch_class_options]
+        if pitch_options:
+            pitch = random.choice(pitch_options)
+            inst.put_note(offset, duration, pitch=pitch)
+
+        # RANK CANDIDATES
 
 
-
-    # CHOOSE
+        # CHOOSE
 
 
 m.closeout()
