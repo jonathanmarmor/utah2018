@@ -2,7 +2,7 @@
 
 import random
 import itertools
-# from collections import Counter
+from collections import Counter
 import os
 import math
 from datetime import datetime
@@ -254,18 +254,18 @@ def split_list(lst, n_chunks):
     '''Break a list into `n_chunks` lists of approximately equal length
 
     >>> list(split_list(range(6), 3))
-    [0, 1], [2, 3], [4, 5]
+    [[0, 1], [2, 3], [4, 5]]
     >>> list(split_list(range(7), 3))
-    [0, 1], [2, 3, 4], [5, 6]
+    [[0, 1], [2, 3, 4], [5, 6]]
 
     # TODO: Right now, this isn't symetrical
-    >>> list(split_list(range(12), 8))
-    >>> [[0], [1, 2], [3], [4, 5], [6], [7, 8], [9], [10, 11]]
-    # So it we could reverse the grouping in one of the halves
-    >>> list(split_list(range(12), 8))
-    >>> [[0], [1, 2], [3], [4, 5], [6, 7], [8], [9, 10], [11]]
-    # Or
-    >>> [[0, 1], [2], [3, 4], [5], [6], [7, 8], [9], [10, 11]]
+    # >>> list(split_list(range(12), 8))
+    # >>> [[0], [1, 2], [3], [4, 5], [6], [7, 8], [9], [10, 11]]
+    # # So it we could reverse the grouping in one of the halves
+    # >>> list(split_list(range(12), 8))
+    # >>> [[0], [1, 2], [3], [4, 5], [6, 7], [8], [9, 10], [11]]
+    # # Or
+    # >>> [[0, 1], [2], [3, 4], [5], [6], [7, 8], [9], [10, 11]]
 
     '''
     chunk_size = len(lst) / float(n_chunks)
@@ -276,6 +276,24 @@ def split_list(lst, n_chunks):
 
 def round_to_sixteenth(flt):
     return round(flt * 4) / 4
+
+
+def subdivide_duration(relative_durations, duration):
+    '''
+    >>> subdivide_duration(8, 4.0)
+    ([0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], [1, 1, 1, 1, 1, 1, 1, 1])
+    >>> subdivide_duration([3, 1, 3, 1], 4.0)
+    ([1.5, 0.5, 1.5, 0.5], [3, 1, 3, 1])
+    '''
+
+    if isinstance(relative_durations, int):
+        # If relative durations isn't a list or tuple then divide equally
+        relative_durations = [1] * relative_durations
+
+    sum_relative_durations = sum(relative_durations)
+    durations = [scale(d, 0, sum_relative_durations, 0, duration) for d in relative_durations]
+    return durations, relative_durations
+
 
 
 if __name__ == '__main__':

@@ -6,7 +6,11 @@ from utils import (
     split_list,
     flatten,
     scale as scale_value,
+    subdivide_duration,
 )
+
+
+# class SubSection(object):
 
 
 class Section(object):
@@ -53,17 +57,7 @@ class Layer(list):
 
         self.duration_quarters = float(duration_quarters)
 
-        if isinstance(sections, int):
-            self.n_sections = sections
-            self.durations = [self.duration_quarters / self.n_sections] * self.n_sections
-            self.relative_durations = [1] * self.n_sections
-            self.sum_relative_durations = self.n_sections
-
-        elif isinstance(sections, (list, tuple)):
-            self.n_sections = len(sections)
-            self.relative_durations = sections
-            self.sum_relative_durations = sum(sections)
-            self.durations = [scale_value(duration, 0, self.sum_relative_durations, 0, self.duration_quarters) for duration in sections]
+        self.durations, self.relative_durations = subdivide_duration(sections, self.duration_quarters)
 
         offset = 0
         index = 0
@@ -72,7 +66,7 @@ class Layer(list):
                 offset,
                 duration,
                 index,
-                self.n_sections,
+                len(self.durations),
                 self,
                 relative_duration=self.relative_durations[index],
             )
