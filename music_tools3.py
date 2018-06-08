@@ -10,9 +10,6 @@ from utils import (
 )
 
 
-# class SubSection(object):
-
-
 class Section(object):
     def __init__(
             self,
@@ -85,6 +82,12 @@ class Layer(list):
                 break
             result.append(section)
         return result
+
+    def starts_at(self, offset):
+        '''If a Section in this Layer starts at offset, return it.'''
+        for section in self:
+            if section.offset == offset:
+                return section
 
 
 class Note(object):
@@ -254,7 +257,10 @@ class Instrument(object):
         openings = []
         ticks = self.ticks.get(window_offset, window_duration)
         for tick in ticks:
-            if not self.get(tick.offset, duration):
+            if tick.offset + duration > window_duration:
+                break
+            candidate_location = self.get(tick.offset, duration)
+            if not candidate_location:
                 openings.append(tick.offset)
         return openings
 
@@ -467,6 +473,26 @@ class Music(object):
         if layer_name:
             return self.layers[layer_name].get(offset, duration)
         return {layer_name:self.layers[layer_name].get(offset, duration) for layer_name in self.layers}
+
+    def starts_at(self, offset):
+        '''Get all the Sections in Layers that start at offset.'''
+        results = []
+        for section in self:
+            found = section.starts_at(offset)
+            if found:
+                results.append(found)
+        return results
+
+    def build_metrical_hierarchy(self):
+        rankings = []
+        for sixteenth in self.sixteenths:
+            depth = 5
+            for layer in self.meter_layers:
+                found = layer.starts_at(sixteenth.offset)
+                if found:
+                    depth -= 1
+            rankings.append(depth)
+        return rankings
 
 
 if __name__ == '__main__':
