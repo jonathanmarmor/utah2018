@@ -81,6 +81,13 @@ instrument_register = {
     'bass': flatten(bass.registers[4:-1]),
 }
 
+fragment = {
+    'oboe': [],
+    'bass_clarinet': [],
+    'vibraphone': [],
+    'bass': [],
+}
+
 
 def make_rhythm(quarters=8):
     failures = 0
@@ -121,6 +128,7 @@ def make_rhythm(quarters=8):
         if not existing_harmony:
             # print 'no harmony'
             pitch = random.choice(instrument_register[inst.part_id])
+            # fragment[inst.part_id].append((offset, duration, pitch, staccato))
             inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
             continue
 
@@ -136,9 +144,18 @@ def make_rhythm(quarters=8):
         if pitch_options:
             pitch = random.choice(pitch_options)
             inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
+            # fragment[inst.part_id].append((offset, duration, pitch, staccato))
 
 
 make_rhythm()
+
+
+for instrument in m.instruments:
+    temp = instrument.notes[:]
+    for note in temp:
+        offsets = [8, 16, 24]
+        for offset in offsets:
+            instrument.put_note(note.offset + offset, note.duration, pitch=note.pitch, staccato=note.staccato)
 
 '''
 TODO:
