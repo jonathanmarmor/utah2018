@@ -515,13 +515,17 @@ class Music(object):
             rankings.append(depth)
         return rankings
 
-    def put_fragment(self, offset, fragment):
-        for instrument in fragment.instruments:
+    def put_fragment(self, offset, fragment, instruments=None):
+        if not instruments:
+            instruments = fragment.instruments
+        for instrument in instruments:
             for note in instrument.finalized_notes:
-                offsets = [0, 8, 16, 24]
-                for offset in offsets:
-                    m.grid[instrument.part_id].put_note(note.offset + offset, note.duration, pitch=note.pitch, staccato=note.staccato)
-
+                self.grid[instrument.part_id].put_note(
+                    note.offset + offset,
+                    note.duration,
+                    pitch=note.pitch,
+                    staccato=note.staccato
+                )
 
 
 if __name__ == '__main__':
