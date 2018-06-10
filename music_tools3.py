@@ -136,7 +136,8 @@ class Note(object):
 
 
 class Instrument(object):
-    def __init__(self, part_name, n_quarters=64):
+    def __init__(self, part_name):
+        self.closeout_has_run = False
         self.notes = []
         self._make_part_names(part_name)
         self.range = instrument_data[self.instrument_name]['range']
@@ -284,16 +285,26 @@ class Instrument(object):
             else:
                 rest_ticks.append(tick)
 
+        if rest_ticks:
+            # Add up the previous rest duration and append it to self.finalized_notes
+            duration = sum([t.duration for t in rest_ticks])
+            note = Note(rest_ticks[0].offset, duration, rest_ticks)
+            self.finalized_notes.append(note)
+
+        self.closeout_has_run = True
+
 
 class Music(object):
     def __init__(self,
             title='Title',
-            bpm=60,
             part_names=None,
             output_dir_parent='output',
             output_dir_name='tmp',
-            n_quarters=64,
+            n_quarters=None,
+            bpm=None,
         ):
+
+        self.closeout_has_run = False
 
         self.output_dir_parent = output_dir_parent
         self.output_dir_name = output_dir_name
@@ -310,27 +321,22 @@ class Music(object):
         self.title = title
         self.composer = 'Jonathan Marmor'
         self.time_signature = None
-        self.bpm = bpm
-        self.n_quarters = n_quarters
 
         self.layers = {}
-        self._init_meter()
 
         self._setup_parts()
 
-    def _setup_parts(self):
-        # Instantiate instruments/parts and make them accessible via Music
-        self.instruments = []
-        self.grid = {}
-        self.part_ids = []
-        for part_name in self.part_names:
-            instrument = Instrument(part_name, n_quarters=self.n_quarters)
+        if n_quarters and bpm:
+            self.set_duration_and_bpm(n_quarters=n_quarters, bpm=bpm)
 
-            self.part_ids.append(instrument.part_id)
-            setattr(self, instrument.part_id, instrument)
-            setattr(self, instrument.abbreviation_id, instrument)
-            self.instruments.append(instrument)
-            self.grid[instrument.part_id] = instrument
+    def set_duration_and_bpm(self, n_quarters=64, bpm=60):
+        self.n_quarters = n_quarters
+        self.bpm = bpm
+
+        self._init_meter()
+
+        for instrument in self.instruments:
+            instrument.n_quarters = n_quarters
 
             instrument.ticks = self.add_layer(instrument.part_id + '_ticks', self.n_sixteenths)
             for tick in instrument.ticks:
@@ -338,6 +344,20 @@ class Music(object):
                 tick.note_start = False
                 tick.note_end = False
                 tick.pitch = None
+
+    def _setup_parts(self):
+        # Instantiate instruments/parts and make them accessible via Music
+        self.instruments = []
+        self.grid = {}
+        self.part_ids = []
+        for part_name in self.part_names:
+            instrument = Instrument(part_name)
+
+            self.part_ids.append(instrument.part_id)
+            setattr(self, instrument.part_id, instrument)
+            setattr(self, instrument.abbreviation_id, instrument)
+            self.instruments.append(instrument)
+            self.grid[instrument.part_id] = instrument
 
     def print_registers(self):
         lowest = min([i.range[0] for i in self.instruments])
@@ -365,7 +385,8 @@ class Music(object):
     def closeout(self):
         for i in self.instruments:
             i.closeout()
-        print 'Done making the music.'
+        self.closeout_has_run = True
+        # print 'Done making the music.'
 
     def notate(self):
         print 'Making notation...'
@@ -493,6 +514,14 @@ class Music(object):
                     depth -= 1
             rankings.append(depth)
         return rankings
+
+    def put_fragment(self, offset, fragment):
+        for instrument in fragment.instruments:
+            for note in instrument.finalized_notes:
+                offsets = [0, 8, 16, 24]
+                for offset in offsets:
+                    m.grid[instrument.part_id].put_note(note.offset + offset, note.duration, pitch=note.pitch, staccato=note.staccato)
+
 
 
 if __name__ == '__main__':

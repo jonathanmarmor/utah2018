@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import random
+import itertools
 
 import numpy as np
 
@@ -23,32 +24,9 @@ bpm, n_quarters = pick_duration_and_bpm(
     max_bpm=125,
 )
 
-m = Music(
-    title='Listen/Space 2018',
-    part_names=[
-        'oboe',
-        'bass_clarinet',
-        'vibraphone',
-        'bass',
-    ],
-    bpm=bpm,
-    output_dir_name='experiment18',
-    n_quarters=n_quarters,
-)
-
-oboe = m.oboe
-bass_clarinet = m.bass_clarinet
-vibes = m.vibraphone
-bass = m.bass
-
-sixteenths = m.sixteenths
-eighths = m.eighths
-quarters = m.quarters
-halves = m.halves
-bars = m.bars
-
 
 chord_types = [
+    (),
     (0,),
     (0, 4),
     (0, 8),
@@ -75,21 +53,27 @@ chord_types = [
 
 
 instrument_register = {
-    'oboe': flatten(oboe.registers[-2:-1]),
-    'bass_clarinet': flatten(bass_clarinet.registers[1:3]),
-    'vibraphone': flatten(vibes.registers[2:-2]),
-    'bass': flatten(bass.registers[4:-1]),
-}
-
-fragment = {
-    'oboe': [],
-    'bass_clarinet': [],
-    'vibraphone': [],
-    'bass': [],
+    'bass': [47, 48, 49, 50, 51, 52, 53, 54, 55],
+    'bass_clarinet': [44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54],
+    'oboe': [82, 83, 84, 85],
+    'vibraphone': [58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73],
 }
 
 
 def make_rhythm(quarters=8):
+    fragment = Music(
+        title='Fragment',
+        part_names=[
+            'oboe',
+            'bass_clarinet',
+            'vibraphone',
+            'bass',
+        ],
+        bpm=bpm,
+        n_quarters=8,
+        output_dir_name='fragment',
+    )
+
     failures = 0
     density = random.randint(14, 29)
     for progress in range(density):
@@ -102,7 +86,7 @@ def make_rhythm(quarters=8):
         if duration == .5 and random.random() < 1.0 / 3:
             staccato = True
 
-        inst = random.choice(m.instruments)
+        inst = random.choice(fragment.instruments)
 
         openings = inst.find_openings(
             duration,
@@ -121,15 +105,15 @@ def make_rhythm(quarters=8):
 
         offset = random.choice(openings)
 
-        notes_context, layers_context, analysis = m.get_context(inst.part_id, offset, duration)
+        notes_context, layers_context, analysis = fragment.get_context(inst.part_id, offset, duration)
 
         existing_harmony = analysis['pitch_classes']
 
         if not existing_harmony:
             # print 'no harmony'
             pitch = random.choice(instrument_register[inst.part_id])
-            # fragment[inst.part_id].append((offset, duration, pitch, staccato))
-            inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
+            fragment.grid[inst.part_id].put_note(offset, duration, pitch=pitch, staccato=staccato)
+            # inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
             continue
 
         pitch_class_options = []
@@ -143,25 +127,140 @@ def make_rhythm(quarters=8):
         pitch_options = [p for p in instrument_register[inst.part_id] if p % 12 in pitch_class_options]
         if pitch_options:
             pitch = random.choice(pitch_options)
-            inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
-            # fragment[inst.part_id].append((offset, duration, pitch, staccato))
+            # inst.put_note(offset, duration, pitch=pitch, staccato=staccato)
+            fragment.grid[inst.part_id].put_note(offset, duration, pitch=pitch, staccato=staccato)
+
+    fragment.closeout()
+
+    return fragment
 
 
-make_rhythm()
+def get_good_variations(fragment):
+    good_variations = []
+
+    transpositions = [-2, -1, 0, 1, 2]
+    for instrument_transpositions in itertools.product(transpositions, repeat=4):
+
+        # Skip if it's just a transposition of all the instruments the same interval
+        if all(x == instrument_transpositions[0] for x in instrument_transpositions):
+            continue
+
+        fragment_v2 = Music(
+            title='Fragment V2',
+            part_names=[
+                'oboe',
+                'bass_clarinet',
+                'vibraphone',
+                'bass',
+            ],
+            bpm=bpm,
+            n_quarters=8,
+            output_dir_name='fragment_v2',
+        )
+
+        for original_inst, new_instrument, transposition in zip(fragment.instruments, fragment_v2.instruments, instrument_transpositions):
+            for note in original_inst.finalized_notes:
+                pitch = None
+                if note.pitch != None:
+                    pitch = note.pitch + transposition
+
+                new_instrument.put_note(note.offset, note.duration, pitch=pitch, staccato=note.staccato)
+
+        fragment_v2.closeout()
+
+        # Test if the new variation meets some criteria (eg, only uses allowed harmonies)
+        goods = []
+        for sixteenth in fragment_v2.sixteenths:
+
+            # Test if the harmony at this sixteenth note moment in time is in chord_types
+            moment = fragment_v2.get(sixteenth.offset, .25)
+
+            pitchclasses = []
+            for inst_name in moment:
+                notes = moment[inst_name]
+                for note in notes:  # always going to be 0 or 1, I think
+                    if note and note.pitch != None:
+                        pitchclasses.append(note.pitch % 12)
+            pitchclasses = list(set(pitchclasses))
+            pitchclasses.sort()
+            pitchclasses = tuple([p - pitchclasses[0] for p in pitchclasses])
+
+            if pitchclasses in chord_types:
+                good = True
+            else:
+                good = False
+            goods.append(good)
+
+        if all(goods):
+            print instrument_transpositions
+            good_variations.append(fragment_v2)
+
+    return good_variations
 
 
-for instrument in m.instruments:
-    temp = instrument.notes[:]
-    for note in temp:
-        offsets = [8, 16, 24]
-        for offset in offsets:
-            instrument.put_note(note.offset + offset, note.duration, pitch=note.pitch, staccato=note.staccato)
+def main():
+    fragment = make_rhythm()
 
-'''
-TODO:
-- Instead of writing directly to the instruments, put the rhythm in a list or dict or something then add it to the music repeatedly.
--
-'''
+    good_variations = get_good_variations(fragment)
 
-m.closeout()
-m.notate()
+    print 'Good variations:', len(good_variations)
+
+    if len(good_variations) < 1:
+        return
+
+    m = Music(
+        title='Listen/Space 2018',
+        part_names=[
+            'oboe',
+            'bass_clarinet',
+            'vibraphone',
+            'bass',
+        ],
+        bpm=bpm,
+        n_quarters= 8 * 4 * (len(good_variations) + 1),  # n_quarters,
+        output_dir_name='experiment18',
+    )
+
+    oboe = m.oboe
+    bass_clarinet = m.bass_clarinet
+    vibes = m.vibraphone
+    bass = m.bass
+
+    sixteenths = m.sixteenths
+    eighths = m.eighths
+    quarters = m.quarters
+    halves = m.halves
+    bars = m.bars
+
+
+    # instrument_register = {
+    #     'oboe': flatten(oboe.registers[-2:-1]),
+    #     'bass_clarinet': flatten(bass_clarinet.registers[1:3]),
+    #     'vibraphone': flatten(vibes.registers[2:-2]),
+    #     'bass': flatten(bass.registers[4:-1]),
+    # }
+
+
+    for instrument in fragment.instruments:
+        for note in instrument.finalized_notes:
+            offsets = [0, 8, 16, 24]
+            for offset in offsets:
+                m.grid[instrument.part_id].put_note(note.offset + offset, note.duration, pitch=note.pitch, staccato=note.staccato)
+
+
+    global_offset = 0
+    for variation in good_variations:
+        global_offset += 32
+        for instrument in variation.instruments:
+            for note in instrument.finalized_notes:
+                offsets = [0, 8, 16, 24]
+                for offset in offsets:
+                    m.grid[instrument.part_id].put_note(note.offset + offset + global_offset, note.duration, pitch=note.pitch, staccato=note.staccato)
+
+
+    m.closeout()
+    m.notate()
+
+
+if __name__ == '__main__':
+    main()
